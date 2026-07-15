@@ -158,16 +158,24 @@ input[type=number]{width:70px;text-align:right;}
   </div>
 
   <div class="leg">
+    <span class="li"><span style="width:20px;height:2px;background:#378ADD;display:inline-block;border-radius:2px;"></span>In stock
+      <span style="width:20px;height:2px;background:#c0392b;display:inline-block;border-radius:2px;margin-left:6px;"></span>Backordered</span>
     <span class="li li-toggle" id="legToggleTotal" title="Click to show/hide the Total Units sales projection">
-      <span style="width:20px;height:2px;background:#378ADD;display:inline-block;border-radius:2px;"></span>Total Units
+      <span style="width:20px;height:0;border-top:2px solid #5F5E5A;display:inline-block;"></span>Total Units
     </span>
     <span class="li li-toggle" id="legToggleDirect" title="Click to show/hide the Direct Units sales projection">
-      <span style="width:20px;height:2px;background:#16A085;display:inline-block;border-radius:2px;"></span>Direct Units
+      <span style="width:20px;height:0;border-top:2px dashed #5F5E5A;display:inline-block;"></span>Direct Units
     </span>
     <span class="li"><span style="width:1.5px;height:12px;background:#1D9E75;display:inline-block;"></span>Restock</span>
+    <span class="li li-toggle" id="legToggleLive" title="Click to show/hide live Rush Order data"><span style="width:9px;height:9px;background:#D6336C;border:1.5px solid #fff;box-shadow:0 0 0 1px #D6336C;border-radius:50%;display:inline-block;"></span>Live (Rush Order)</span>
     <span class="li"><span style="width:20px;height:1px;border-top:1.5px dashed #5F5E5A;display:inline-block;"></span>Today</span>
+    <span class="li li-toggle" id="btnLiveHistory" style="margin-left:auto;color:#D6336C;font-weight:600;">📋 Live history ▾</span>
   </div>
-  <div class="leg-hint">💡 Click "Total Units" or "Direct Units" above to show/hide that line on the chart</div>
+  <div class="leg-hint">💡 Color = in stock/backordered. Solid = Total Units, dashed = Direct Units. Click a line name or "Live (Rush Order)" to show/hide it.</div>
+
+  <div id="liveHistoryPanel" style="display:none;margin:-4px 0 14px;">
+    <table class="ep-tbl2" id="liveHistoryTable" style="width:100%;"></table>
+  </div>
 
   <!-- MEU Chart -->
   <div class="section-divider">
@@ -254,6 +262,17 @@ let LIVE_STOCK={
   ]
 };
 
+// Running history of live pulls for the Smartbuds line, keyed by day-index
+// from chart START (May 5, 2026). balance = Available - Backorder (net
+// position; positive = in stock, negative = backordered).
+let LIVE_HISTORY=[
+  {date:'2026-07-08', day:64, balance:-419},
+  {date:'2026-07-09', day:65, balance:-201},
+  {date:'2026-07-10', day:66, balance:-224},
+  {date:'2026-07-13', day:69, balance:184},
+  {date:'2026-07-14', day:70, balance:166},
+];
+
 // Pulls ./data.json (written daily by scripts/refresh.js via the GitHub
 // Action) and, if present, overwrites the fallback data above, then
 // re-renders everything that depends on it. Safe to fail silently — if
@@ -265,9 +284,11 @@ async function loadLiveData(){
     if(!res.ok) return;
     const d=await res.json();
     if(d.liveStock) LIVE_STOCK=d.liveStock;
+    if(d.liveHistory) LIVE_HISTORY=d.liveHistory;
     if(d.restocks) restocks=d.restocks;
     renderLiveStock();
     renderRestockRows();
+    renderLiveHistoryTable();
     update();
   }catch(e){
     // no data.json available — keep using fallback values, no error shown
@@ -336,7 +357,7 @@ const MONTHS=[
 ];
 
 let viewStart=0, viewEnd=2;
-let showTotal=true, showDirect=true;
+let showTotal=true, showDirect=true, showLive=true;
 let restocks=[
   {date:'2026-05-27', units:240},
   {date:'2026-06-12', units:400},
@@ -411,6 +432,14 @@ function calcScenario(soldArray){
     if(d>=0&&d<=END_DAY) allRestockMap[d]=(allRestockMap[d]||0)+r.units;
   });
 
+  // Days where we have a real Rush Order pull override the model entirely;
+  // projection for days after the most recent live pull continues from that
+  // real anchor instead of blindly extending from the old ACTUAL_INV baseline.
+  // Applies the same to every scenario since it's real data, not a
+  // sales-rate assumption.
+  const liveMap={};
+  LIVE_HISTORY.forEach(h=>{liveMap[h.day]=h.balance;});
+
   const values=[],rawValues=[],zones=[];
   let projStock=ACTUAL_INV[ACTUAL_END],inStockout=false,lastsThruDay=null,minStock=0;
   for(let day=0;day<=END_DAY;day++){
@@ -418,6 +447,9 @@ function calcScenario(soldArray){
     if(day<=ACTUAL_END){
       v=ACTUAL_INV[day];
       projStock=v;
+    }else if(Object.prototype.hasOwnProperty.call(liveMap,day)){
+      v=liveMap[day];
+      projStock=v; // re-anchor future projection to the real value
     }else{
       const nr=restockMap[day]||0;const sold=soldArray[day]||0;
       projStock=projStock+nr-sold;v=projStock;
@@ -502,10 +534,12 @@ const todayPlugin={id:'today',afterDraw(ch,_,opts){
 // Unified marker system for restocks + today on the main chart.
 // Top-anchored pill labels go through shared lane assignment so close
 // dates stack vertically instead of overlapping each other.
+const LIVE_COLOR='#D6336C';
+
 const markersPlugin={id:'markers',afterDraw(ch,_,opts){
   if(!ch.scales?.x) return;
   const off=opts.offset||0;
-  const{ctx,chartArea:{top,bottom},scales:{x}}=ch;
+  const{ctx,chartArea:{top,bottom,right},scales:{x,y}}=ch;
   const maxIdx=ch.data.labels.length-1;
   const items=[];
 
@@ -547,6 +581,34 @@ const markersPlugin={id:'markers',afterDraw(ch,_,opts){
       ctx.fillText(it.text,it.px,py0+it.ph/2);
     });
     ctx.restore();
+  }
+
+  // Live pulls: small dot(s) + a compact side label on the last point only.
+  // Deliberately NOT part of the top-pill/flagpole system above — it sits
+  // right on the data point so it never covers restock/projection info.
+  const livePts=opts.showLive===false?[]:LIVE_HISTORY.map(h=>({...h,day:h.day-off})).filter(h=>h.day>=0&&h.day<=maxIdx);
+  if(livePts.length){
+    livePts.forEach((p,i)=>{
+      const px=x.getPixelForValue(p.day),py=y.getPixelForValue(p.balance);
+      ctx.save();
+      ctx.beginPath();ctx.arc(px,py,7,0,Math.PI*2);ctx.fillStyle='#fff';ctx.fill();
+      ctx.fillStyle=LIVE_COLOR;ctx.strokeStyle='#fff';ctx.lineWidth=2;
+      ctx.beginPath();ctx.arc(px,py,5.5,0,Math.PI*2);ctx.fill();ctx.stroke();
+      ctx.restore();
+      if(i===livePts.length-1){
+        const lbl='Live '+(p.balance>0?'+':'')+p.balance.toLocaleString();
+        ctx.save();
+        ctx.font='600 10px system-ui,sans-serif';
+        const tw=ctx.measureText(lbl).width,pw=tw+10,ph=16;
+        const toRight=(right-px)>pw+14;
+        const lx=toRight?px+10:px-10-pw, ly=py-ph/2;
+        ctx.fillStyle='#fff';ctx.strokeStyle=LIVE_COLOR;ctx.lineWidth=1.25;
+        rrect(ctx,lx,ly,pw,ph,4);ctx.fill();ctx.stroke();
+        ctx.fillStyle=LIVE_COLOR;ctx.textAlign=toRight?'left':'right';ctx.textBaseline='middle';
+        ctx.fillText(lbl,toRight?lx+5:lx+pw-5,ly+ph/2);
+        ctx.restore();
+      }
+    });
   }
 }};
 
@@ -605,17 +667,28 @@ function buildChart(calc){
   const totalSliced=calc.total.values.slice(wS,wE+1);
   const directSliced=calc.direct.values.slice(wS,wE+1);
   const labels=totalSliced.map((_,i)=>fmtDate(dayToDate(i+wS)));
-  const allVals=[...totalSliced,...directSliced,0];
+  const liveValsInWindow=LIVE_HISTORY.filter(h=>h.day>=wS&&h.day<=wE).map(h=>h.balance);
+  const allVals=[...totalSliced,...directSliced,...liveValsInWindow,0];
   const yMin=Math.min(...allVals)<0?Math.floor(Math.min(...allVals)/50)*50:0;
   const yMax=Math.ceil(Math.max(...allVals)/50)*50||50;
 
+  // Color = status (blue in stock / red backordered), applied per-segment so
+  // each line's own crossings are colored independently. Line style
+  // distinguishes the two scenarios: solid = Total Units, dashed = Direct
+  // Units — since color is now spoken for by status, not scenario.
   const mkDataset=(key,data,hidden)=>{
-    const s=SCENARIO_STYLE[key];
+    const dash=key==='direct'?[6,4]:[];
     return{
-      label:s.label,data,hidden,
+      label:SCENARIO_STYLE[key].label,data,hidden,
       fill:'origin',tension:0,pointRadius:0,pointHoverRadius:5,
       pointHoverBorderColor:'#fff',pointHoverBorderWidth:2,borderWidth:2,
-      borderColor:s.border,backgroundColor:s.bg,pointHoverBackgroundColor:s.border,
+      borderDash:dash,
+      segment:{
+        borderColor:ctx=>ctx.p1.parsed.y<0?'rgba(192,57,43,0.9)':'#378ADD',
+        backgroundColor:ctx=>ctx.p1.parsed.y<0?'rgba(192,57,43,0.10)':'rgba(55,138,221,0.08)',
+      },
+      borderColor:'#378ADD',backgroundColor:'rgba(55,138,221,0.08)',
+      pointHoverBackgroundColor:ctx=>data[ctx.dataIndex]<0?'#c0392b':'#378ADD',
     };
   };
 
@@ -641,13 +714,14 @@ function buildChart(calc){
             label:item=>{
               const raw=item.raw;
               const absDay=item.dataIndex+wS;
-              const tag=absDay<=ACTUAL_END?' (actual)':' (projected)';
+              const isLiveDay=LIVE_HISTORY.some(h=>h.day===absDay);
+              const tag=isLiveDay?' (RushOrder)':(absDay<=ACTUAL_END?' (actual)':' (projected)');
               const qty=raw<0?Math.abs(raw).toLocaleString()+' backordered':raw.toLocaleString()+' in stock';
               return `${item.dataset.label}: ${qty}${tag}`;
             }
           }
         },
-        markers:{restocks:calc.total.restockMarkers,offset:wS},
+        markers:{restocks:calc.total.restockMarkers,offset:wS,showLive},
       },
       scales:{
         x:{display:false},
@@ -790,6 +864,7 @@ loadLiveData();
 function updateToggleLegendUI(){
   document.getElementById('legToggleTotal').classList.toggle('off',!showTotal);
   document.getElementById('legToggleDirect').classList.toggle('off',!showDirect);
+  document.getElementById('legToggleLive').classList.toggle('off',!showLive);
 }
 updateToggleLegendUI();
 
@@ -802,6 +877,33 @@ document.getElementById('legToggleDirect').addEventListener('click',()=>{
   showDirect=!showDirect;
   updateToggleLegendUI();
   update();
+});
+document.getElementById('legToggleLive').addEventListener('click',()=>{
+  showLive=!showLive;
+  updateToggleLegendUI();
+  update();
+});
+
+function renderLiveHistoryTable(){
+  const tbl=document.getElementById('liveHistoryTable');
+  const rows=LIVE_HISTORY.map((h,i)=>{
+    const prev=LIVE_HISTORY[i-1];
+    const delta=prev?h.balance-prev.balance:null;
+    const deltaStr=delta===null?'—':(delta>0?`+${delta.toLocaleString()}`:delta.toLocaleString());
+    const deltaColor=delta===null?'#888780':(delta>0?'#1D9E75':(delta<0?'#c0392b':'#888780'));
+    const balStr=(h.balance>0?'+':'')+h.balance.toLocaleString();
+    return `<tr><td>${h.date}</td><td style="text-align:right;">${balStr}</td><td style="text-align:right;color:${deltaColor};">${deltaStr}</td></tr>`;
+  }).join('');
+  tbl.innerHTML=`<tr><th>Date</th><th style="text-align:right;">Smartbuds balance</th><th style="text-align:right;">Change</th></tr>${rows}`;
+}
+renderLiveHistoryTable();
+
+let liveHistoryOpen=false;
+document.getElementById('btnLiveHistory').addEventListener('click',()=>{
+  liveHistoryOpen=!liveHistoryOpen;
+  document.getElementById('liveHistoryPanel').style.display=liveHistoryOpen?'block':'none';
+  document.getElementById('btnLiveHistory').textContent=liveHistoryOpen?'📋 Live history ▴':'📋 Live history ▾';
+  if(liveHistoryOpen) renderLiveHistoryTable();
 });
 
 // ---------- Email draft feature ----------
