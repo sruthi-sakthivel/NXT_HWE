@@ -148,6 +148,10 @@ input[type=number]{width:70px;text-align:right;}
       <div id="restockRows"></div>
       <button class="btn-add" id="btnAdd">+ Add restock</button>
     </div>
+    <div class="cp" style="margin-top:10px;">
+      <div class="cp-lbl">Projected balance at each restock</div>
+      <table class="ep-tbl2" id="restockProjectionTable" style="width:100%;"></table>
+    </div>
   </div>
 
   <div class="chart-outer">
@@ -171,7 +175,7 @@ input[type=number]{width:70px;text-align:right;}
     <span class="li"><span style="width:20px;height:1px;border-top:1.5px dashed #5F5E5A;display:inline-block;"></span>Today</span>
     <span class="li li-toggle" id="btnLiveHistory" style="margin-left:auto;color:#D6336C;font-weight:600;">📋 Live history ▾</span>
   </div>
-  <div class="leg-hint">💡 Color = in stock/backordered. Solid = Total Units, dashed = Direct Units. Click a line name or "Live (Rush Order)" to show/hide it.</div>
+  <div class="leg-hint">💡 Click Total Units or Direct Units to see inventory changes based on that projection plan. Color always shows in stock (blue) vs backordered (red).</div>
 
   <div id="liveHistoryPanel" style="display:none;margin:-4px 0 14px;">
     <table class="ep-tbl2" id="liveHistoryTable" style="width:100%;"></table>
@@ -357,7 +361,7 @@ const MONTHS=[
 ];
 
 let viewStart=0, viewEnd=2;
-let showTotal=true, showDirect=true, showLive=true;
+let showTotal=true, showDirect=false, showLive=true;
 let restocks=[
   {date:'2026-05-27', units:240},
   {date:'2026-06-12', units:400},
@@ -836,11 +840,32 @@ function buildMeuChart(meuValues){
   meuChart=new Chart(document.getElementById('meuChart'),cfg);
 }
 
+function renderRestockProjectionTable(calc){
+  const tbl=document.getElementById('restockProjectionTable');
+  const sorted=[...restocks].sort((a,b)=>daysBetween(START,parseDate(a.date))-daysBetween(START,parseDate(b.date)));
+  const rows=sorted.map(r=>{
+    const day=daysBetween(START,parseDate(r.date));
+    const inRange=day>=0&&day<=END_DAY;
+    const totalBal=inRange?calc.total.values[day]:null;
+    const directBal=inRange?calc.direct.values[day]:null;
+    const fmtBal=v=>v===null?'—':(v<0?Math.abs(v).toLocaleString()+' BO':v.toLocaleString());
+    const colorOf=v=>v===null?'':(v<0?'color:#c0392b;font-weight:600;':'color:#378ADD;');
+    return `<tr>
+      <td>${fmtDate(dayToDate(day))}</td>
+      <td style="text-align:right;">+${r.units.toLocaleString()}</td>
+      <td style="text-align:right;${colorOf(totalBal)}">${fmtBal(totalBal)}</td>
+      <td style="text-align:right;${colorOf(directBal)}">${fmtBal(directBal)}</td>
+    </tr>`;
+  }).join('');
+  tbl.innerHTML=`<tr><th>Restock date</th><th style="text-align:right;">Qty added</th><th style="text-align:right;">Total Units balance</th><th style="text-align:right;">Direct Units balance</th></tr>${rows||'<tr><td colspan=4>No restocks scheduled</td></tr>'}`;
+}
+
 function update(){
   const calc=calcData();
   window.__lastCalc=calc.total; // email draft + stats key off the Total Units scenario
   renderStats(calc.total);
   buildChart(calc);
+  renderRestockProjectionTable(calc);
   const meuValues=calcMeuData();
   buildMeuChart(meuValues);
 }
