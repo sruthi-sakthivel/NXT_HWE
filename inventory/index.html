@@ -34,7 +34,8 @@ body,div,span,input,label,button,select{font-family:system-ui,-apple-system,sans
 .ri-per{font-size:11px;color:#5F5E5A;}
 .ri-val{font-size:11px;font-weight:600;color:#1a1a18;background:rgba(0,0,0,0.07);padding:2px 7px;border-radius:5px;font-variant-numeric:tabular-nums;}
 .ri-val.actual{background:rgba(55,138,221,0.12);color:#378ADD;}
-.re-row{display:grid;grid-template-columns:68px 1fr auto 20px;align-items:center;gap:7px;margin-bottom:6px;}
+.re-row{display:grid;grid-template-columns:58px 1fr auto 20px;align-items:center;gap:7px;margin-bottom:6px;}
+.re-product{font-size:10px;font-weight:700;padding:4px 2px;border-radius:6px;text-align:center;cursor:pointer;}
 .re-row:last-child{margin-bottom:0;}
 .re-lbl{font-size:12px;color:#5F5E5A;}
 input[type=date],input[type=number]{font-size:12px;padding:4px 7px;border-radius:7px;border:1px solid rgba(0,0,0,0.12);background:#fff;color:#1a1a18;width:100%;}
@@ -71,7 +72,7 @@ input[type=number]{width:70px;text-align:right;}
 .mb-row{display:flex;align-items:center;gap:8px;margin-bottom:7px;}
 .mb-row label{font-size:12px;color:#5F5E5A;flex:1;}
 .mb-row input[type=number],.mb-row input[type=text]{font-size:12px;padding:5px 8px;border-radius:7px;border:1px solid rgba(0,0,0,0.12);background:#f5f4f0;width:160px;}
-.deliv-row{display:grid;grid-template-columns:78px 50px 60px 1fr 1fr 20px;gap:6px;align-items:center;margin-bottom:6px;}
+.deliv-row{display:grid;grid-template-columns:78px 54px 50px 60px 1fr 1fr 20px;gap:6px;align-items:center;margin-bottom:6px;}
 .deliv-row .dr-static{font-size:11px;color:#5F5E5A;background:rgba(0,0,0,0.05);padding:5px 7px;border-radius:6px;text-align:center;}
 .deliv-row input[type=text]{font-size:11px;padding:5px 7px;border-radius:6px;border:1px solid rgba(0,0,0,0.12);background:#f5f4f0;width:100%;}
 .btn-remove-sm{background:none;border:none;cursor:pointer;color:#B4B2A9;font-size:14px;}
@@ -145,6 +146,13 @@ input[type=number]{width:70px;text-align:right;}
   <div class="ctrls">
     <div class="cp">
       <div class="cp-lbl">Sales projection / day</div>
+      <div class="ri" style="margin-bottom:6px;">
+        <span class="ri-per"></span>
+        <span style="display:flex;gap:6px;">
+          <span style="width:54px;text-align:center;font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.04em;color:#378ADD;">Total</span>
+          <span style="width:54px;text-align:center;font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.04em;color:#16A085;">Direct</span>
+        </span>
+      </div>
       <div id="rateRows"></div>
     </div>
     <div class="cp">
@@ -170,8 +178,9 @@ input[type=number]{width:70px;text-align:right;}
     <span class="li li-toggle" id="legToggleDirect" title="Click to show/hide the Direct Units sales projection">
       <span style="width:20px;height:0;border-top:2px dashed #5F5E5A;display:inline-block;"></span>Direct Units
     </span>
-    <span class="li"><span style="width:1.5px;height:12px;background:#1D9E75;display:inline-block;"></span>Restock</span>
-    <span class="li li-toggle" id="legToggleLive" title="Click to show/hide live Rush Order data"><span style="width:9px;height:9px;background:#D6336C;border:1.5px solid #fff;box-shadow:0 0 0 1px #D6336C;border-radius:50%;display:inline-block;"></span>Live (Rush Order)</span>
+    <span class="li"><span style="width:1.5px;height:12px;background:#1D9E75;display:inline-block;"></span>MP3 Restock</span>
+    <span class="li"><span style="width:1.5px;height:12px;background:#D97706;display:inline-block;"></span>MP4 Restock</span>
+    <span class="li"><span style="width:9px;height:9px;background:#D6336C;border:1.5px solid #fff;box-shadow:0 0 0 1px #D6336C;border-radius:50%;display:inline-block;"></span>Live (Rush Order)</span>
     <span class="li"><span style="width:20px;height:1px;border-top:1.5px dashed #5F5E5A;display:inline-block;"></span>Today</span>
     <span class="li li-toggle" id="btnLiveHistory" style="margin-left:auto;color:#D6336C;font-weight:600;">📋 Live history ▾</span>
   </div>
@@ -361,15 +370,16 @@ const MONTHS=[
 ];
 
 let viewStart=0, viewEnd=2;
-let showTotal=true, showDirect=false, showLive=true;
+let showTotal=true, showDirect=false;
 let restocks=[
-  {date:'2026-05-27', units:240},
-  {date:'2026-06-12', units:400},
-  {date:'2026-07-06', units:480, actual:true},
-  {date:'2026-07-08', units:240, actual:true},
-  {date:'2026-07-13', units:480, actual:true},
-  {date:'2026-07-31', units:400},
+  {date:'2026-05-27', units:240, product:'MP3'},
+  {date:'2026-06-12', units:400, product:'MP3'},
+  {date:'2026-07-06', units:480, actual:true, product:'MP3'},
+  {date:'2026-07-08', units:240, actual:true, product:'MP3'},
+  {date:'2026-07-13', units:480, actual:true, product:'MP3'},
+  {date:'2026-07-31', units:400, product:'MP3'},
 ];
+const PRODUCT_COLOR={MP3:'#1D9E75',MP4:'#D97706'};
 
 const TODAY=new Date();
 const TODAY_DAY=Math.round((new Date(TODAY.getFullYear(),TODAY.getMonth(),TODAY.getDate())-START)/86400000);
@@ -397,13 +407,20 @@ function renderRestockRows(){
   c.innerHTML=restocks.map((r,i)=>{
     const day=daysBetween(START,parseDate(r.date));
     const isActual=r.actual===true||day<=ACTUAL_END;
+    const product=r.product||'MP3';
+    const color=PRODUCT_COLOR[product];
     return `<div class="re-row">
-      <span class="re-lbl" style="${isActual?'color:#378ADD;':''}"">Restock ${i+1}</span>
+      <select class="re-product" data-idx="${i}" style="border:1px solid ${color}55;background:${color}18;color:${color};">
+        <option value="MP3" ${product==='MP3'?'selected':''}>MP3</option>
+        <option value="MP4" ${product==='MP4'?'selected':''}>MP4</option>
+      </select>
       <input type="date" value="${r.date}" data-idx="${i}" ${isActual?'style="border-color:rgba(55,138,221,0.35);background:rgba(55,138,221,0.04);"':''}/>
       <input type="number" value="${r.units}" min="0" step="50" style="width:70px;text-align:right;${isActual?'border-color:rgba(55,138,221,0.35);background:rgba(55,138,221,0.04);':''}" data-idx="${i}"/>
       <button class="btn-remove" data-remove="${i}">&times;</button>
     </div>`;
   }).join('');
+  c.querySelectorAll('select.re-product').forEach(el=>
+    el.addEventListener('change',()=>{restocks[+el.dataset.idx].product=el.value;renderRestockRows();update();}));
   c.querySelectorAll('input[type=date]').forEach(el=>
     el.addEventListener('change',()=>{restocks[+el.dataset.idx].date=el.value;renderRestockRows();update();}));
   c.querySelectorAll('input[type=number]').forEach(el=>
@@ -415,7 +432,7 @@ function renderRestockRows(){
 document.getElementById('btnAdd').addEventListener('click',()=>{
   const last=restocks.length>0?parseDate(restocks[restocks.length-1].date):new Date(2026,8,1);
   const next=new Date(last.getTime()+30*86400000);
-  restocks.push({date:next.toISOString().slice(0,10),units:500});
+  restocks.push({date:next.toISOString().slice(0,10),units:500,product:'MP4'});
   renderRestockRows();update();
 });
 
@@ -428,12 +445,6 @@ function calcScenario(soldArray){
   restocks.forEach(r=>{
     const d=daysBetween(START,parseDate(r.date));
     if(d>ACTUAL_END) restockMap[d]=(restockMap[d]||0)+r.units;
-  });
-
-  const allRestockMap={};
-  restocks.forEach(r=>{
-    const d=daysBetween(START,parseDate(r.date));
-    if(d>=0&&d<=END_DAY) allRestockMap[d]=(allRestockMap[d]||0)+r.units;
   });
 
   // Days where we have a real Rush Order pull override the model entirely;
@@ -465,7 +476,12 @@ function calcScenario(soldArray){
     else if(v>0&&inStockout){zones[zones.length-1].end=day-1;inStockout=false;}
   }
 
-  const restockMarkers=Object.entries(allRestockMap).map(([d,u])=>({day:+d,units:u}));
+  // One marker per restock event (not merged by day) so MP3 and MP4
+  // restocks landing on the same date still show as distinct, correctly
+  // colored pills instead of a combined number.
+  const restockMarkers=restocks
+    .map(r=>({day:daysBetween(START,parseDate(r.date)),units:r.units,product:r.product||'MP3'}))
+    .filter(m=>m.day>=0&&m.day<=END_DAY);
   return{values,rawValues,zones,restockMarkers,totalRestocked:restocks.reduce((s,r)=>s+r.units,0),lastsThruDay,minStock};
 }
 
@@ -547,10 +563,17 @@ const markersPlugin={id:'markers',afterDraw(ch,_,opts){
   const maxIdx=ch.data.labels.length-1;
   const items=[];
 
-  (opts.restocks||[]).forEach(({day,units})=>{
+  // Stack same-day restocks into separate rows (e.g. an MP3 + MP4 restock
+  // landing on the same date) so their pills don't render on top of each
+  // other now that they're no longer merged into one combined number.
+  const restockDayCount={};
+  (opts.restocks||[]).forEach(({day,units,product})=>{
     const d=day-off;
     if(d<0||d>maxIdx) return;
-    items.push({px:x.getPixelForValue(d),text:'+'+units.toLocaleString(),bg:'#1D9E75',fg:'#fff',lineColor:'#1D9E75',dashed:true,lineTo:bottom,bold:false,row:1});
+    const stackIdx=restockDayCount[d]||0;
+    restockDayCount[d]=stackIdx+1;
+    const color=PRODUCT_COLOR[product]||'#1D9E75';
+    items.push({px:x.getPixelForValue(d),text:'+'+units.toLocaleString(),bg:color,fg:'#fff',lineColor:color,dashed:true,lineTo:bottom,bold:false,row:1+stackIdx});
   });
 
   const tDay=TODAY_DAY-off;
@@ -725,7 +748,7 @@ function buildChart(calc){
             }
           }
         },
-        markers:{restocks:calc.total.restockMarkers,offset:wS,showLive},
+        markers:{restocks:calc.total.restockMarkers,offset:wS},
       },
       scales:{
         x:{display:false},
@@ -865,12 +888,12 @@ function renderRateTable(){
     return `<div class="ri">
       <span class="ri-per">${fmtRangeLabel(p.start,p.end)}</span>
       <span style="display:flex;gap:6px;">
-        <span class="ri-val" style="color:#378ADD;">T ${t}/day</span>
-        <span class="ri-val" style="color:#16A085;">D ${d}/day</span>
+        <span class="ri-val" style="width:54px;text-align:center;color:#378ADD;">${t}/day</span>
+        <span class="ri-val" style="width:54px;text-align:center;color:#16A085;">${d}/day</span>
       </span>
     </div>`;
   }).join('');
-  c.innerHTML=`<div class="ri"><span class="ri-per">${actualLabel}</span><span class="ri-val actual">Actual data</span></div>${rows}`;
+  c.innerHTML=`<div class="ri"><span class="ri-per">${actualLabel}</span><span class="ri-val actual" style="width:114px;text-align:center;">Actual data</span></div>${rows}`;
 }
 
 function update(){
@@ -902,7 +925,6 @@ loadLiveData();
 function updateToggleLegendUI(){
   document.getElementById('legToggleTotal').classList.toggle('off',!showTotal);
   document.getElementById('legToggleDirect').classList.toggle('off',!showDirect);
-  document.getElementById('legToggleLive').classList.toggle('off',!showLive);
 }
 updateToggleLegendUI();
 
@@ -913,11 +935,6 @@ document.getElementById('legToggleTotal').addEventListener('click',()=>{
 });
 document.getElementById('legToggleDirect').addEventListener('click',()=>{
   showDirect=!showDirect;
-  updateToggleLegendUI();
-  update();
-});
-document.getElementById('legToggleLive').addEventListener('click',()=>{
-  showLive=!showLive;
   updateToggleLegendUI();
   update();
 });
@@ -1053,11 +1070,11 @@ const RESTOCK_BATCH_INFO=[
 function initDeliveryRows(){
   // seed from full restocks list (past and future) so nothing gets dropped
   deliveryRows=restocks
-    .map((r,i)=>({date:r.date,units:r.units,dayNum:daysBetween(START,parseDate(r.date)),origIdx:i}))
+    .map((r,i)=>({date:r.date,units:r.units,product:r.product||'MP3',dayNum:daysBetween(START,parseDate(r.date)),origIdx:i}))
     .sort((a,b)=>a.dayNum-b.dayNum)
     .map(r=>{
       const info=RESTOCK_BATCH_INFO[r.origIdx]||{batch:'',source:''};
-      return{date:r.date,units:r.units,batch:info.batch,source:info.source,status:deliveryStatus(r.date)};
+      return{date:r.date,units:r.units,product:r.product,batch:info.batch,source:info.source,status:deliveryStatus(r.date)};
     });
 }
 
@@ -1065,6 +1082,7 @@ function renderDeliveryRows(){
   const c=document.getElementById('delivRows');
   c.innerHTML=`<div class="deliv-row" style="margin-bottom:8px;">
       <div style="font-size:9px;color:#B4B2A9;text-transform:uppercase;">Date</div>
+      <div style="font-size:9px;color:#B4B2A9;text-transform:uppercase;">Product</div>
       <div style="font-size:9px;color:#B4B2A9;text-transform:uppercase;">Status</div>
       <div style="font-size:9px;color:#B4B2A9;text-transform:uppercase;">Qty</div>
       <div style="font-size:9px;color:#B4B2A9;text-transform:uppercase;">Batch</div>
@@ -1073,8 +1091,14 @@ function renderDeliveryRows(){
     </div>`+
     deliveryRows.map((r,i)=>{
       const statusColor=r.status==='Received'?'#1D9E75':'#5F5E5A';
+      const product=r.product||'MP3';
+      const pColor=PRODUCT_COLOR[product];
       return `<div class="deliv-row">
       <div class="dr-static">${r.date}</div>
+      <select data-idx="${i}" data-field="product" class="re-product" style="border:1px solid ${pColor}55;background:${pColor}18;color:${pColor};">
+        <option value="MP3" ${product==='MP3'?'selected':''}>MP3</option>
+        <option value="MP4" ${product==='MP4'?'selected':''}>MP4</option>
+      </select>
       <select data-idx="${i}" data-field="status" style="font-size:11px;padding:4px 4px;border-radius:6px;border:1px solid rgba(0,0,0,0.12);background:#f5f4f0;color:${statusColor};font-weight:600;">
         <option value="Received" ${r.status==='Received'?'selected':''}>Received</option>
         <option value="Expected" ${r.status==='Expected'?'selected':''}>Expected</option>
@@ -1096,6 +1120,12 @@ function renderDeliveryRows(){
       renderDeliveryRows();
       renderEmailPreview();
     }));
+  c.querySelectorAll('select[data-field=product]').forEach(el=>
+    el.addEventListener('change',()=>{
+      deliveryRows[+el.dataset.idx].product=el.value;
+      renderDeliveryRows();
+      renderEmailPreview();
+    }));
   c.querySelectorAll('button[data-remove]').forEach(el=>
     el.addEventListener('click',()=>{
       deliveryRows.splice(+el.dataset.remove,1);
@@ -1105,7 +1135,7 @@ function renderDeliveryRows(){
 }
 
 document.getElementById('btnAddDeliv').addEventListener('click',()=>{
-  deliveryRows.push({date:fmtGenDate(TODAY),units:0,batch:'',source:'',status:'Expected'});
+  deliveryRows.push({date:fmtGenDate(TODAY),units:0,product:'MP4',batch:'',source:'',status:'Expected'});
   renderDeliveryRows();
   renderEmailPreview();
 });
@@ -1118,8 +1148,9 @@ function renderEmailPreview(){
   const delivRowsHtml=deliveryRows.map(r=>{
     const status=r.status;
     const statusColor=status==='Received'?'#1D9E75':'#5F5E5A';
+    const product=r.product||'MP3';
     return `<tr>
-      <td>${r.date}</td><td style="color:${statusColor};font-weight:600;">${status}</td><td>${r.units.toLocaleString()}</td><td>${r.batch||'—'}</td><td>${r.source||'—'}</td>
+      <td style="color:${PRODUCT_COLOR[product]};font-weight:700;">${product}</td><td>${r.date}</td><td style="color:${statusColor};font-weight:600;">${status}</td><td>${r.units.toLocaleString()}</td><td>${r.batch||'—'}</td><td>${r.source||'—'}</td>
     </tr>`;
   }).join('');
   const liveRowsHtml=LIVE_STOCK.items.map(it=>`<tr>
@@ -1144,7 +1175,7 @@ function renderEmailPreview(){
     <div class="ep-section-title">📅 Projected in/out timeline</div>
     <table class="ep-tbl2"><tr><th>Date</th><th>Flips to</th><th style="text-align:right;">~Balance</th></tr>${timelineRows||'<tr><td colspan=3>No upcoming flips in projection window</td></tr>'}</table>
     <div class="ep-section-title">📦 Inbound deliveries (driving the projection)</div>
-    <table class="ep-tbl2"><tr><th>Date</th><th>Status</th><th>Qty</th><th>Batch</th><th>Source</th></tr>${delivRowsHtml||'<tr><td colspan=5>No deliveries in window</td></tr>'}</table>
+    <table class="ep-tbl2"><tr><th>Product</th><th>Date</th><th>Status</th><th>Qty</th><th>Batch</th><th>Source</th></tr>${delivRowsHtml||'<tr><td colspan=6>No deliveries in window</td></tr>'}</table>
   `;
 }
 
@@ -1171,8 +1202,8 @@ function buildEmailPlainText(){
   t+=`Date\tFlips to\t~Balance\n`;
   m.timeline.forEach(f=>{t+=`${f.date}\t${f.type==='OUT OF STOCK'?'BACKORDERED':f.type}\t${f.balance.toLocaleString()}\n`;});
   t+=`\n📦 Inbound deliveries (driving the projection)\n`;
-  t+=`Date\tStatus\tQty\tBatch\tSource\n`;
-  deliveryRows.forEach(r=>{t+=`${r.date}\t${r.status}\t${r.units.toLocaleString()}\t${r.batch||'—'}\t${r.source||'—'}\n`;});
+  t+=`Product\tDate\tStatus\tQty\tBatch\tSource\n`;
+  deliveryRows.forEach(r=>{t+=`${r.product||'MP3'}\t${r.date}\t${r.status}\t${r.units.toLocaleString()}\t${r.batch||'—'}\t${r.source||'—'}\n`;});
   return t;
 }
 
