@@ -1,13 +1,13 @@
 {
   "liveStock": {
-    "fetchedAt": "Jul 14, 2026",
+    "fetchedAt": "Jul 15, 2026",
     "items": [
       {
         "key": "earbuds",
         "name": "Smartbuds",
         "sku": "NSSB0100-ZW",
-        "available": 153,
-        "committed": 19,
+        "available": 138,
+        "committed": 12,
         "backorder": 4
       },
       {
@@ -85,6 +85,11 @@
       "date": "2026-07-14",
       "day": 70,
       "balance": 149
+    },
+    {
+      "date": "2026-07-15",
+      "day": 71,
+      "balance": 134
     }
   ],
   "restocks": [
@@ -116,5 +121,5 @@
       "units": 400
     }
   ],
-  "lastRefreshed": "2026-07-15T00:15:00.991Z"
+  "lastRefreshed": "2026-07-15T17:02:22.326Z"
 }
