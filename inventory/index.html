@@ -142,15 +142,15 @@ input[type=number]{width:70px;text-align:right;}
 
   <div class="stats" id="statRow"></div>
 
-  <div class="ctrls" style="grid-template-columns:1fr;">
+  <div class="ctrls">
+    <div class="cp">
+      <div class="cp-lbl">Sales projection / day</div>
+      <div id="rateRows"></div>
+    </div>
     <div class="cp">
       <div class="cp-lbl">Restock events</div>
       <div id="restockRows"></div>
       <button class="btn-add" id="btnAdd">+ Add restock</button>
-    </div>
-    <div class="cp" style="margin-top:10px;">
-      <div class="cp-lbl">Projected balance at each restock</div>
-      <table class="ep-tbl2" id="restockProjectionTable" style="width:100%;"></table>
     </div>
   </div>
 
@@ -840,24 +840,37 @@ function buildMeuChart(meuValues){
   meuChart=new Chart(document.getElementById('meuChart'),cfg);
 }
 
-function renderRestockProjectionTable(calc){
-  const tbl=document.getElementById('restockProjectionTable');
-  const sorted=[...restocks].sort((a,b)=>daysBetween(START,parseDate(a.date))-daysBetween(START,parseDate(b.date)));
-  const rows=sorted.map(r=>{
-    const day=daysBetween(START,parseDate(r.date));
-    const inRange=day>=0&&day<=END_DAY;
-    const totalBal=inRange?calc.total.values[day]:null;
-    const directBal=inRange?calc.direct.values[day]:null;
-    const fmtBal=v=>v===null?'—':(v<0?Math.abs(v).toLocaleString()+' BO':v.toLocaleString());
-    const colorOf=v=>v===null?'':(v<0?'color:#c0392b;font-weight:600;':'color:#378ADD;');
-    return `<tr>
-      <td>${fmtDate(dayToDate(day))}</td>
-      <td style="text-align:right;">+${r.units.toLocaleString()}</td>
-      <td style="text-align:right;${colorOf(totalBal)}">${fmtBal(totalBal)}</td>
-      <td style="text-align:right;${colorOf(directBal)}">${fmtBal(directBal)}</td>
-    </tr>`;
+// Static (doesn't depend on restocks/live data/toggles) — average daily
+// units sold per period, straight from the spreadsheet arrays. Mirrors the
+// old hardcoded "Direct units / day" table's period boundaries but now
+// computed for both scenarios instead of one flat baked-in number.
+function avgRate(arr,startDay,endDay){
+  let sum=0,count=0;
+  for(let d=startDay;d<=endDay;d++){sum+=arr[d]||0;count++;}
+  return count?Math.round((sum/count)*10)/10:0;
+}
+function fmtRangeLabel(startDay,endDay){
+  const sd=dayToDate(startDay),ed=dayToDate(endDay);
+  const mo=d=>d.toLocaleDateString('en-US',{month:'short'});
+  return sd.getMonth()===ed.getMonth()?`${mo(sd)} ${sd.getDate()}–${ed.getDate()}`:`${mo(sd)} ${sd.getDate()}–${mo(ed)} ${ed.getDate()}`;
+}
+function renderRateTable(){
+  const c=document.getElementById('rateRows');
+  const actualLabel=fmtRangeLabel(0,ACTUAL_END);
+  const periods=[{start:ACTUAL_END+1,end:MONTHS[1].end}];
+  for(let i=2;i<MONTHS.length;i++) periods.push({start:MONTHS[i].start,end:MONTHS[i].end});
+  const rows=periods.map(p=>{
+    const t=avgRate(TOTAL_UNITS_SOLD,p.start,p.end);
+    const d=avgRate(DIRECT_UNITS_SOLD,p.start,p.end);
+    return `<div class="ri">
+      <span class="ri-per">${fmtRangeLabel(p.start,p.end)}</span>
+      <span style="display:flex;gap:6px;">
+        <span class="ri-val" style="color:#378ADD;">T ${t}/day</span>
+        <span class="ri-val" style="color:#16A085;">D ${d}/day</span>
+      </span>
+    </div>`;
   }).join('');
-  tbl.innerHTML=`<tr><th>Restock date</th><th style="text-align:right;">Qty added</th><th style="text-align:right;">Total Units balance</th><th style="text-align:right;">Direct Units balance</th></tr>${rows||'<tr><td colspan=4>No restocks scheduled</td></tr>'}`;
+  c.innerHTML=`<div class="ri"><span class="ri-per">${actualLabel}</span><span class="ri-val actual">Actual data</span></div>${rows}`;
 }
 
 function update(){
@@ -865,7 +878,6 @@ function update(){
   window.__lastCalc=calc.total; // email draft + stats key off the Total Units scenario
   renderStats(calc.total);
   buildChart(calc);
-  renderRestockProjectionTable(calc);
   const meuValues=calcMeuData();
   buildMeuChart(meuValues);
 }
@@ -882,6 +894,7 @@ setTimeout(()=>{
 
 buildSelects();
 renderRestockRows();
+renderRateTable();
 renderLiveStock();
 update();
 loadLiveData();
