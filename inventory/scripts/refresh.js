@@ -13,7 +13,13 @@
 const fs = require('fs');
 const path = require('path');
 
-const START = new Date(2026, 4, 5); // May 5, 2026 — must match START in the dashboard HTML
+// The GitHub Actions runner's clock is UTC, but the dashboard's "day" is a
+// Pacific business day (the cron schedule is anchored to 6am PT). Computing
+// "today" from the runner's own timezone caused runs after ~5pm PT to be
+// logged as the next day, skipping a day in the history entirely.
+const TIME_ZONE = 'America/Los_Angeles';
+
+const START = Date.UTC(2026, 4, 5); // May 5, 2026 — must match START in the dashboard HTML
 const DATA_PATH = path.join(__dirname, '..', 'data.json');
 
 // SKU -> display info. Keep in sync with the dashboard's LIVE_STOCK fallback.
@@ -27,16 +33,32 @@ const SKU_MAP = {
   'NSEMWX0103T-W': { key: 'wingsL',  name: 'Sleeves — Large' },
 };
 
-function dayIndex(d) {
-  return Math.round((d - START) / 86400000);
+// Returns { year, month, day } for the given instant, as read on a Pacific
+// Time wall clock — not the runner's local timezone.
+function pacificDateParts(d) {
+  const parts = new Intl.DateTimeFormat('en-US', {
+    timeZone: TIME_ZONE,
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+  }).formatToParts(d).reduce((acc, p) => {
+    if (p.type !== 'literal') acc[p.type] = Number(p.value);
+    return acc;
+  }, {});
+  return parts;
 }
 
-function fmtDate(d) {
-  return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
+function dayIndex({ year, month, day }) {
+  return Math.round((Date.UTC(year, month - 1, day) - START) / 86400000);
 }
 
-function fmtDisplayDate(d) {
-  return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+function fmtDate({ year, month, day }) {
+  return year + '-' + String(month).padStart(2, '0') + '-' + String(day).padStart(2, '0');
+}
+
+function fmtDisplayDate({ year, month, day }) {
+  return new Date(Date.UTC(year, month - 1, day))
+    .toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric', timeZone: 'UTC' });
 }
 
 async function main() {
@@ -72,7 +94,8 @@ async function main() {
   });
 
   const now = new Date();
-  const today = dayIndex(new Date(now.getFullYear(), now.getMonth(), now.getDate()));
+  const todayParts = pacificDateParts(now);
+  const today = dayIndex(todayParts);
 
   // Load existing data.json (if present) to preserve history and restocks
   let existing = { liveHistory: [], restocks: [] };
@@ -84,18 +107,18 @@ async function main() {
   const balance = earbuds.available - earbuds.backorder;
 
   const history = (existing.liveHistory || []).filter(h => h.day !== today);
-  history.push({ date: fmtDate(now), day: today, balance });
+  history.push({ date: fmtDate(todayParts), day: today, balance });
   history.sort((a, b) => a.day - b.day);
 
   const payload = {
-    liveStock: { fetchedAt: fmtDisplayDate(now), items },
+    liveStock: { fetchedAt: fmtDisplayDate(todayParts), items },
     liveHistory: history,
     restocks: existing.restocks || [],
     lastRefreshed: now.toISOString(),
   };
 
   fs.writeFileSync(DATA_PATH, JSON.stringify(payload, null, 2) + '\n');
-  console.log(`data.json updated — Smartbuds balance: ${balance} (as of ${fmtDate(now)})`);
+  console.log(`data.json updated — Smartbuds balance: ${balance} (as of ${fmtDate(todayParts)} PT)`);
 }
 
 main().catch(err => {
