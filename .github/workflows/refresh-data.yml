@@ -34,3 +34,17 @@ jobs:
         with:
           commit_message: "Daily Rush Order data refresh"
           file_pattern: inventory/data.json
+
+      - name: Notify Slack
+        if: always()
+        env:
+          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
+        run: |
+          if [ "${{ job.status }}" = "success" ]; then
+            TEXT="✅ Inventory data refresh ran and updated data.json"
+          else
+            TEXT="⚠️ Inventory data refresh failed — check the Actions log: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"
+          fi
+          curl -sf -X POST -H 'Content-type: application/json' \
+            --data "$(printf '{"text":"%s"}' "$TEXT")" \
+            "$SLACK_WEBHOOK_URL"
