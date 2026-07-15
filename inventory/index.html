@@ -509,7 +509,7 @@ function calcMeuData(){
 // scenario-agnostic now that there are two projection lines.
 function renderStats(d){
   const z=d.zones;
-  const b1=`<div class="st"><div class="sl">Starting stock (May 5)</div><div class="sv">82 units</div></div>`;
+  const b1=`<div class="st"><div class="sl">Starting Smartbud Stock (May 5)</div><div class="sv">82 units</div></div>`;
   const boPeriods=z.map((zone,i)=>{
     const isLast=i===z.length-1&&zone.end===END_DAY;
     const days=(zone.end-zone.start)+1;
@@ -517,7 +517,7 @@ function renderStats(d){
     return `<div class="st"><div class="sl">Backorder period ${i+1} starts</div><div class="date-pill">${fmtDate(dayToDate(zone.start))}</div>${durHtml}</div>`;
   }).join('');
   const ld=d.lastsThruDay!==null?fmtDate(dayToDate(d.lastsThruDay)):'';
-  const b6=`<div class="st lasts"><div class="sl">MP3 stock lasts through</div>${ld?`<div class="date-pill ${d.lastsThruDay===END_DAY?'ok':'lasts'}">${ld}</div>`:''}</div>`;
+  const b6=`<div class="st lasts"><div class="sl">Smartbud stock lasts through</div>${ld?`<div class="date-pill ${d.lastsThruDay===END_DAY?'ok':'lasts'}">${ld}</div>`:''}</div>`;
   const b7=`<div class="st"><div class="sl">Total units to be restocked</div><div class="sv">${d.totalRestocked.toLocaleString()} units</div></div>`;
   document.getElementById('statRow').innerHTML=b1+boPeriods+b6+b7;
 }
