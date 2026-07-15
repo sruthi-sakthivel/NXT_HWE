@@ -1,6 +1,6 @@
 {
   "liveStock": {
-    "fetchedAt": "Jul 15, 2026",
+    "fetchedAt": "Jul 14, 2026",
     "items": [
       {
         "key": "earbuds",
@@ -82,8 +82,8 @@
       "balance": 189
     },
     {
-      "date": "2026-07-15",
-      "day": 71,
+      "date": "2026-07-14",
+      "day": 70,
       "balance": 149
     }
   ],
