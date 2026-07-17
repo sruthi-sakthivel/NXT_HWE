@@ -298,9 +298,10 @@ async function loadLiveData(){
     const d=await res.json();
     if(d.liveStock) LIVE_STOCK=d.liveStock;
     if(d.liveHistory) LIVE_HISTORY=d.liveHistory;
-    if(d.restocks) restocks=d.restocks;
+    // Restocks are intentionally NOT loaded from data.json — they're
+    // manually-planned data that lives here in index.html, not something
+    // Rush Order reports. See refresh.js for why.
     renderLiveStock();
-    renderRestockRows();
     renderLiveHistoryTable();
     update();
   }catch(e){

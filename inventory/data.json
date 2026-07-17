@@ -102,34 +102,5 @@
       "balance": 82
     }
   ],
-  "restocks": [
-    {
-      "date": "2026-05-27",
-      "units": 240
-    },
-    {
-      "date": "2026-06-12",
-      "units": 400
-    },
-    {
-      "date": "2026-07-06",
-      "units": 480,
-      "actual": true
-    },
-    {
-      "date": "2026-07-08",
-      "units": 240,
-      "actual": true
-    },
-    {
-      "date": "2026-07-13",
-      "units": 480,
-      "actual": true
-    },
-    {
-      "date": "2026-07-31",
-      "units": 400
-    }
-  ],
   "lastRefreshed": "2026-07-17T16:03:18.773Z"
 }

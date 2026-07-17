@@ -97,8 +97,12 @@ async function main() {
   const todayParts = pacificDateParts(now);
   const today = dayIndex(todayParts);
 
-  // Load existing data.json (if present) to preserve history and restocks
-  let existing = { liveHistory: [], restocks: [] };
+  // Load existing data.json (if present) to preserve history. Restocks are
+  // NOT carried through here — they're manually-planned data that lives in
+  // index.html, not something Rush Order reports. Writing them here caused
+  // dashboard edits to restocks to get silently overwritten by whatever was
+  // last in data.json the moment the page fetched it.
+  let existing = { liveHistory: [] };
   if (fs.existsSync(DATA_PATH)) {
     try { existing = JSON.parse(fs.readFileSync(DATA_PATH, 'utf8')); } catch (e) { /* start fresh */ }
   }
@@ -113,7 +117,6 @@ async function main() {
   const payload = {
     liveStock: { fetchedAt: fmtDisplayDate(todayParts), items },
     liveHistory: history,
-    restocks: existing.restocks || [],
     lastRefreshed: now.toISOString(),
   };
 
