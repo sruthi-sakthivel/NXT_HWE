@@ -1167,7 +1167,7 @@ function renderEmailPreview(){
     <div class="ep-status-badge" style="display:inline-block;margin:4px 0 8px;padding:3px 10px;border-radius:20px;font-size:11px;font-weight:700;background:${statusBg};color:${m.statusColor};">${m.emoji} ${m.statusLabel}</div>
     ${m.hasResidualBackorder?`<div style="font-size:11px;color:#5F5E5A;margin:-4px 0 10px;">Note: ${m.backorder.toLocaleString()} units are still backordered from earlier orders even though net stock is positive (${m.available.toLocaleString()} available).</div>`:''}
     <div class="ep-sub">Generated ${m.generated} · from the Smartbuds &amp; MEU Inventory Projections dashboard + Rush Order live data</div>
-    <div class="ep-sub" style="margin-top:-8px;margin-bottom:12px;">🔗 <a href="https://projectionsandinventory.netlify.app/" style="color:#378ADD;">projectionsandinventory.netlify.app</a></div>
+    <div class="ep-sub" style="margin-top:-8px;margin-bottom:12px;">🔗 <a href="https://projectionsandinventory.vercel.app/" style="color:#378ADD;">projectionsandinventory.vercel.app</a></div>
     <table class="ep-table">
       <tr><td>On-hand inventory</td><td>${m.onHand.toLocaleString()}</td></tr>
       <tr><td>Paid orders awaiting shipment</td><td>${m.paidOrders.toLocaleString()}</td></tr>
@@ -1194,7 +1194,7 @@ function buildEmailPlainText(){
   t+=`Status: ${m.emoji} ${m.statusLabel}\n`;
   if(m.hasResidualBackorder) t+=`Note: ${m.backorder.toLocaleString()} units still backordered from earlier orders even though net stock is positive (${m.available.toLocaleString()} available)\n`;
   t+=`Generated ${m.generated} · from the Smartbuds & MEU Inventory Projections dashboard + Rush Order live data\n`;
-  t+=`Dashboard: https://projectionsandinventory.netlify.app/\n\n`;
+  t+=`Dashboard: https://projectionsandinventory.vercel.app/\n\n`;
   t+=`On-hand inventory\t${m.onHand.toLocaleString()}\n`;
   t+=`Paid orders awaiting shipment\t${m.paidOrders.toLocaleString()}\n`;
   t+=`Sales run rate\t${m.salesRate.rate} ${m.salesRate.label}\n`;
