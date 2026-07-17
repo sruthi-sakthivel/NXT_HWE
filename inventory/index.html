@@ -1022,10 +1022,11 @@ function buildEmailModel(){
   // A residual backorder alongside positive net stock is worth calling out
   // explicitly so it doesn't read as a contradiction in the email.
   const hasResidualBackorder=onHand>0&&backorder>0;
-  // Display label/color are neutral-toned for the email ("BACKORDERED" in
-  // orange) while `status` itself stays 'OUT OF STOCK' internally since
-  // other logic (isOOS, flip direction) keys off that exact string.
-  const statusLabel=status==='OUT OF STOCK'?'BACKORDERED':status;
+  // Display label/color are neutral-toned for the email ("BACKORDERED" /
+  // "POSITIVE STOCK") while `status` itself stays 'OUT OF STOCK'/'IN STOCK'
+  // internally since other logic (isOOS, flip direction) keys off those
+  // exact strings.
+  const statusLabel=status==='OUT OF STOCK'?'BACKORDERED':'POSITIVE STOCK';
   const statusColor=status==='OUT OF STOCK'?'#E67E22':'#1D9E75';
 
   const flips=computeFlips(d);
@@ -1040,7 +1041,7 @@ function buildEmailModel(){
   const nextSellOutLabel=isOOS?'Next projected positive stock':'Next projected backordered period';
   // TEMP: hand-set to 9/3 for now per Sruthi — model doesn't project a
   // recovery within the window, but this is the working estimate to use.
-  const nextSellOut=nextFlip?fmtFlipDate(dayToDate(nextFlip.day)):(isOOS?'Thu Sep 03 (est.)':'Stays in stock through projection window');
+  const nextSellOut=nextFlip?fmtFlipDate(dayToDate(nextFlip.day)):(isOOS?'Thu Sep 03 (est.)':'Stays at positive stock through projection window');
 
   // Next literal restock event (from restocks list), independent of flips
   const futureRestocks=restocks
@@ -1148,7 +1149,7 @@ document.getElementById('btnAddDeliv').addEventListener('click',()=>{
 function renderEmailPreview(){
   const m=buildEmailModel();
   const timelineRows=m.timeline.map(f=>`<tr>
-      <td>${f.date}</td><td>${f.type==='OUT OF STOCK'?'BACKORDERED':f.type}</td><td style="text-align:right;">${f.balance.toLocaleString()}</td>
+      <td>${f.date}</td><td>${f.type==='OUT OF STOCK'?'BACKORDERED':'POSITIVE STOCK'}</td><td style="text-align:right;">${f.balance.toLocaleString()}</td>
     </tr>`).join('');
   const delivRowsHtml=deliveryRows.map(r=>{
     const status=r.status;
@@ -1205,7 +1206,7 @@ function buildEmailPlainText(){
   LIVE_STOCK.items.forEach(it=>{t+=`${it.name}\t${it.available.toLocaleString()}\t${it.committed.toLocaleString()}\t${it.backorder.toLocaleString()}\n`;});
   t+=`\n📅 Projected in/out timeline\n`;
   t+=`Date\tFlips to\t~Balance\n`;
-  m.timeline.forEach(f=>{t+=`${f.date}\t${f.type==='OUT OF STOCK'?'BACKORDERED':f.type}\t${f.balance.toLocaleString()}\n`;});
+  m.timeline.forEach(f=>{t+=`${f.date}\t${f.type==='OUT OF STOCK'?'BACKORDERED':'POSITIVE STOCK'}\t${f.balance.toLocaleString()}\n`;});
   t+=`\n📦 Inbound deliveries (driving the projection)\n`;
   t+=`Product\tDate\tStatus\tQty\tBatch\tSource\n`;
   deliveryRows.forEach(r=>{t+=`${r.product||'MP3'}\t${r.date}\t${r.status}\t${r.units.toLocaleString()}\t${r.batch||'—'}\t${r.source||'—'}\n`;});
