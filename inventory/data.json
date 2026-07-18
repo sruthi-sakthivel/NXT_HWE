@@ -1,21 +1,21 @@
 {
   "liveStock": {
-    "fetchedAt": "Jul 17, 2026",
+    "fetchedAt": "Jul 18, 2026",
     "items": [
       {
         "key": "earbuds",
         "name": "Smartbuds",
         "sku": "NSSB0100-ZW",
-        "available": 83,
-        "committed": 13,
-        "backorder": 4
+        "available": 61,
+        "committed": 32,
+        "backorder": 1
       },
       {
         "key": "tipsS",
         "name": "Tips — Small",
         "sku": "NSEMTA0201C-W",
-        "available": 392,
-        "committed": 107,
+        "available": 389,
+        "committed": 110,
         "backorder": 0
       },
       {
@@ -24,7 +24,7 @@
         "sku": "NSEMTB0201C-W",
         "available": 0,
         "committed": 21,
-        "backorder": 138
+        "backorder": 150
       },
       {
         "key": "tipsL",
@@ -48,14 +48,14 @@
         "sku": "NSEMWY0303T-W",
         "available": 0,
         "committed": 64,
-        "backorder": 34
+        "backorder": 37
       },
       {
         "key": "wingsL",
         "name": "Sleeves — Large",
         "sku": "NSEMWX0103T-W",
-        "available": 186,
-        "committed": 39,
+        "available": 174,
+        "committed": 51,
         "backorder": 0
       }
     ]
@@ -100,7 +100,12 @@
       "date": "2026-07-17",
       "day": 73,
       "balance": 79
+    },
+    {
+      "date": "2026-07-18",
+      "day": 74,
+      "balance": 60
     }
   ],
-  "lastRefreshed": "2026-07-17T17:21:42.447Z"
+  "lastRefreshed": "2026-07-18T16:03:13.466Z"
 }
