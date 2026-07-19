@@ -6,8 +6,8 @@
         "key": "earbuds",
         "name": "Smartbuds",
         "sku": "NSSB0100-ZW",
-        "available": 44,
-        "committed": 49,
+        "available": 43,
+        "committed": 50,
         "backorder": 1
       },
       {
@@ -109,8 +109,8 @@
     {
       "date": "2026-07-19",
       "day": 75,
-      "balance": 43
+      "balance": 42
     }
   ],
-  "lastRefreshed": "2026-07-19T16:03:12.471Z"
+  "lastRefreshed": "2026-07-19T17:12:47.519Z"
 }
