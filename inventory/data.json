@@ -6,8 +6,8 @@
         "key": "earbuds",
         "name": "Smartbuds",
         "sku": "NSSB0100-ZW",
-        "available": 20,
-        "committed": 10,
+        "available": 14,
+        "committed": 16,
         "backorder": 0
       },
       {
@@ -30,8 +30,8 @@
         "key": "tipsL",
         "name": "Tips — Large",
         "sku": "NSEMTC0201C-W",
-        "available": 401,
-        "committed": 1,
+        "available": 389,
+        "committed": 13,
         "backorder": 0
       },
       {
@@ -48,7 +48,7 @@
         "sku": "NSEMWY0303T-W",
         "available": 0,
         "committed": 64,
-        "backorder": 37
+        "backorder": 49
       },
       {
         "key": "wingsL",
@@ -114,8 +114,8 @@
     {
       "date": "2026-07-20",
       "day": 76,
-      "balance": 20
+      "balance": 14
     }
   ],
-  "lastRefreshed": "2026-07-20T16:03:14.712Z"
+  "lastRefreshed": "2026-07-20T18:16:34.086Z"
 }
