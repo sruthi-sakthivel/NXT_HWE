@@ -1,0 +1,48 @@
+name: Refresh Wear Time dashboard
+
+on:
+  schedule:
+    # Mon/Wed/Fri at 5:13am PDT (12:13 UTC). GitHub Actions cron is fixed to
+    # UTC and does NOT observe daylight saving, so in winter (PST) this runs
+    # at 4:13am local. Offset 13 min past the hour on purpose: GitHub warns
+    # top-of-the-hour schedules (":00") hit peak congestion and get delayed.
+    - cron: '13 12 * * 1,3,5'
+  workflow_dispatch: {}  # lets you trigger it manually from the Actions tab
+
+jobs:
+  refresh:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install dependencies
+        run: pip install -r wear_time/scripts/requirements.txt
+
+      - name: Fetch Mixpanel data (main + longitudinal)
+        env:
+          MIXPANEL_PROJECT_ID: ${{ secrets.MIXPANEL_PROJECT_ID }}
+          MIXPANEL_API_SECRET: ${{ secrets.MIXPANEL_API_SECRET }}
+        run: |
+          python wear_time/scripts/impedance_contact_quality.py
+          python wear_time/scripts/impedance_longitudinal.py
+
+      - name: Build HTML reports
+        run: |
+          python wear_time/scripts/build_wear_report.py
+          python wear_time/scripts/build_wear_report_longitudinal.py
+
+      - name: Commit updated dashboards
+        uses: stefanzweifel/git-auto-commit-action@v5
+        with:
+          commit_message: "Wear time dashboard refresh"
+          file_pattern: >-
+            wear_time/index.html
+            wear_time/longitudinal/index.html
+            wear_time/wear_time_data.json
+            wear_time/wear_time_data_longitudinal.json
