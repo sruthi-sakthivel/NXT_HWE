@@ -190,23 +190,20 @@ input[type=number]{width:70px;text-align:right;}
     <table class="ep-tbl2" id="liveHistoryTable" style="width:100%;"></table>
   </div>
 
-  <!-- MEU Chart -->
+  <!-- Tips & Sleeves live stock -->
   <div class="section-divider">
-    <div class="section-title">MEU Sets Sold / Day</div>
+    <div class="section-title">Tips &amp; Sleeves — Live Stock (Rush Order)</div>
   </div>
 
   <div class="chart-outer">
-    <div class="y-axis-label">Sets Sold / Day</div>
+    <div class="y-axis-label">Units in Stock / Backorder</div>
     <div class="chart-wrap-sm">
       <canvas id="meuChart"></canvas>
     </div>
   </div>
 
-  <div class="leg">
-    <span class="li"><span style="width:20px;height:2px;background:#9B59B6;display:inline-block;border-radius:2px;"></span>Sets sold (actual)</span>
-    <span class="li"><span style="width:20px;height:2px;background:rgba(155,89,182,0.35);display:inline-block;border-radius:2px;border-top:2px dashed rgba(155,89,182,0.5);"></span>Sets sold (projected)</span>
-    <span class="li"><span style="width:20px;height:1px;border-top:1.5px dashed #5F5E5A;display:inline-block;"></span>Today</span>
-  </div>
+  <div class="leg" id="itemLegend"></div>
+  <div class="leg-hint">💡 Click an item above to show/hide it. Points only appear from the day Rush Order tracking began for that SKU — there's no way to backfill earlier days.</div>
 
   <div class="modal-overlay" id="emailModal">
     <div class="modal-box">
@@ -286,6 +283,14 @@ let LIVE_HISTORY=[
   {date:'2026-07-14', day:70, balance:166},
 ];
 
+// Same shape as LIVE_HISTORY above, but per-SKU for the 6 tips/sleeves
+// consumables (Smartbuds itself is tracked separately via LIVE_HISTORY).
+// Starts empty — there's no history before Rush Order tracking for these
+// SKUs began; seedItemHistoryIfEmpty() below fills in a single point from
+// today's pull so the chart isn't blank before the first automated refresh
+// has a chance to accumulate more.
+let ITEM_HISTORY={tipsS:[],tipsM:[],tipsL:[],wingsS:[],wingsM:[],wingsL:[]};
+
 // Pulls ./data.json (written daily by scripts/refresh.js via the GitHub
 // Action) and, if present, overwrites the fallback data above, then
 // re-renders everything that depends on it. Safe to fail silently — if
@@ -298,11 +303,13 @@ async function loadLiveData(){
     const d=await res.json();
     if(d.liveStock) LIVE_STOCK=d.liveStock;
     if(d.liveHistory) LIVE_HISTORY=d.liveHistory;
+    if(d.itemHistory) ITEM_HISTORY=d.itemHistory;
     // Restocks are intentionally NOT loaded from data.json — they're
     // manually-planned data that lives here in index.html, not something
     // Rush Order reports. See refresh.js for why.
     renderLiveStock();
     renderLiveHistoryTable();
+    seedItemHistoryIfEmpty();
     update();
   }catch(e){
     // no data.json available — keep using fallback values, no error shown
@@ -329,14 +336,17 @@ function renderLiveStock(){
 const ACTUAL_INV=[82,59,41,20,-2,-42,-61,-72,-81,-96,-147,-172,-200,-221,-240,-259,-291,-333,-367,-401,-453,-473,-257,-265,-290,-304,-325,-357,-400,-417,-453,-475,-497,-540,-569,-588,-610,-630,-253,-273,-295,-316,-350,-398,-437,-464,-491,-534,-557];
 const ACTUAL_END=48; // last actual = day 48 (Jun 22)
 
-// MEU sets sold actuals: starts day 27 (Jun 1). null = no data yet.
-// Indices 0-26: null (May 5 – May 31, no MEU data)
-// Indices 27-48: actual (Jun 1 – Jun 22)
-const MEU_ACTUAL_START=27;
-const MEU_ACTUAL_END=48;
-const MEU_SETS_ACTUAL=[54,36,27,36,36,45,9,36,27,18,45,45,18,9,27,45,18,63,18,18,0,45]; // 22 values, days 27-48 (Jun 1-22)
-
-const MEU_STARTING_STOCK=1298;
+// Tips & Sleeves — 6 consumable SKUs tracked via daily Rush Order pulls
+// (see ITEM_HISTORY above), same pattern as the Smartbuds live history.
+// No projection here, just real pulled data accumulating one point per day.
+const ITEM_META={
+  tipsS:  {name:'Tips — Small',     color:'#378ADD'},
+  tipsM:  {name:'Tips — Medium',    color:'#16A085'},
+  tipsL:  {name:'Tips — Large',     color:'#9B59B6'},
+  wingsS: {name:'Sleeves — Small',  color:'#E67E22'},
+  wingsM: {name:'Sleeves — Medium', color:'#C0392B'},
+  wingsL: {name:'Sleeves — Large',  color:'#34495E'},
+};
 
 const START=new Date(2026,4,5); // May 5
 const END_DAY=240;
@@ -348,16 +358,6 @@ const END_DAY=240;
 const TOTAL_UNITS_SOLD=[16,23,18,21,22,40,19,11,9,15,51,25,28,21,19,19,32,42,34,34,52,20,24,8,25,14,21,32,43,17,36,22,22,43,29,19,22,20,23,20,22,21,34,48,39,27,27,43,23,27,27,27,27,27,27,27,27,27,27,27,27,27,27,27,27,27,27,27,27,27,27,27,27,27,27,27,27,27,27,27,27,27,27,27,27,27,27,27,29,29,29,29,29,29,29,29,29,29,29,29,29,29,29,29,29,29,29,29,29,29,29,29,29,29,29,29,29,29,29,31,31,31,31,31,31,31,31,31,31,31,31,31,31,31,31,31,31,31,31,31,31,31,31,31,31,31,31,31,31,38,38,38,38,38,38,38,38,38,38,38,38,38,38,38,38,38,38,38,38,38,38,38,38,38,38,38,38,38,38,38,49,49,49,49,49,49,49,49,49,49,49,49,49,49,49,49,49,49,49,49,49,49,49,49,49,49,49,49,49,49,59,59,59,59,59,59,59,59,59,59,59,59,59,59,59,59,59,59,59,59,59,59,59,59,59,59,59,59,59,59,59];
 const DIRECT_UNITS_SOLD=[16,23,18,21,22,40,19,11,9,15,51,25,28,21,19,19,32,42,34,34,52,20,24,8,25,14,21,32,43,17,36,22,22,43,29,19,22,20,23,20,22,21,34,48,39,27,27,43,23,27,27,27,27,27,27,27,27,27,27,27,27,27,27,27,27,27,27,27,27,27,27,27,27,27,27,27,27,27,27,27,27,27,27,27,27,27,27,27,29,29,29,29,29,29,29,29,29,29,29,29,29,29,29,29,29,29,29,29,29,29,29,29,29,29,29,29,29,29,29,31,31,31,31,31,31,31,31,31,31,31,31,31,31,31,31,31,31,31,31,31,31,31,31,31,31,31,31,31,31,29,29,29,29,29,29,29,29,29,29,29,29,29,29,29,29,29,29,29,29,29,29,29,29,29,29,29,29,29,29,29,37,37,37,37,37,37,37,37,37,37,37,37,37,37,37,37,37,37,37,37,37,37,37,37,37,37,37,37,37,37,44,44,44,44,44,44,44,44,44,44,44,44,44,44,44,44,44,44,44,44,44,44,44,44,44,44,44,44,44,44,44];
 
-// MEU sets sold projection rate (per day) after ACTUAL_END
-function meuProjRate(day){
-  if(day<=56)  return 27;  // Jun 23-30
-  if(day<=87)  return 36;  // Jul
-  if(day<=118) return 36;  // Aug (≈4 sets/day * 9 packs)
-  if(day<=148) return 45;  // Sep
-  if(day<=179) return 63;  // Oct
-  if(day<=209) return 90;  // Nov
-  return 135;              // Dec
-}
 
 const MONTHS=[
   {name:'May', start:0,   end:26},
@@ -494,19 +494,44 @@ function calcData(){
   return{total:calcScenario(TOTAL_UNITS_SOLD),direct:calcScenario(DIRECT_UNITS_SOLD)};
 }
 
-function calcMeuData(){
-  // Build MEU sets sold array: null before day 27, actual 27-52, projected after
-  const values=[];
-  for(let day=0;day<=END_DAY;day++){
-    if(day<MEU_ACTUAL_START){
-      values.push(null);
-    } else if(day<=MEU_ACTUAL_END){
-      values.push(MEU_SETS_ACTUAL[day-MEU_ACTUAL_START]);
-    } else {
-      values.push(meuProjRate(day));
-    }
-  }
+// Seeds a single point (today, from the currently-loaded LIVE_STOCK) for
+// any SKU in ITEM_HISTORY that's still empty — e.g. before refresh.js has
+// ever written itemHistory to data.json, or a key data.json doesn't have
+// yet. Safe to call repeatedly; only fills gaps, never overwrites.
+function seedItemHistoryIfEmpty(){
+  Object.keys(ITEM_META).forEach(key=>{
+    if((ITEM_HISTORY[key]||[]).length>0) return;
+    const it=LIVE_STOCK.items.find(i=>i.key===key);
+    if(!it) return;
+    ITEM_HISTORY[key]=[{date:fmtGenDate(TODAY),day:TODAY_DAY,balance:it.available-it.backorder}];
+  });
+}
+
+function calcItemStock(key){
+  const values=new Array(END_DAY+1).fill(null);
+  (ITEM_HISTORY[key]||[]).forEach(h=>{
+    if(h.day>=0&&h.day<=END_DAY) values[h.day]=h.balance;
+  });
   return values;
+}
+
+let showItem={tipsS:true,tipsM:true,tipsL:true,wingsS:true,wingsM:true,wingsL:true};
+
+function renderItemLegend(){
+  const c=document.getElementById('itemLegend');
+  const itemSpans=Object.entries(ITEM_META).map(([key,meta])=>
+    `<span class="li li-toggle${showItem[key]?'':' off'}" data-item-toggle="${key}" title="Click to show/hide ${meta.name}">
+      <span style="width:20px;height:2px;background:${meta.color};display:inline-block;border-radius:2px;"></span>${meta.name}
+    </span>`
+  ).join('');
+  c.innerHTML=itemSpans+`<span class="li"><span style="width:20px;height:1px;border-top:1.5px dashed #5F5E5A;display:inline-block;"></span>Today</span>`;
+  c.querySelectorAll('[data-item-toggle]').forEach(el=>
+    el.addEventListener('click',()=>{
+      const key=el.dataset.itemToggle;
+      showItem[key]=!showItem[key];
+      renderItemLegend();
+      buildItemChart();
+    }));
 }
 
 // Stats cards reflect the Total Units scenario specifically (the more
@@ -774,53 +799,34 @@ function buildChart(calc){
   chart=new Chart(document.getElementById('invChart'),cfg);
 }
 
-function buildMeuChart(meuValues){
+function buildItemChart(){
   const wS=MONTHS[viewStart].start,wE=MONTHS[viewEnd].end;
-  const sliced=meuValues.slice(wS,wE+1);
-  const labels=sliced.map((_,i)=>fmtDate(dayToDate(i+wS)));
+  const labels=[];
+  for(let i=wS;i<=wE;i++) labels.push(fmtDate(dayToDate(i)));
 
-  // Split into actual and projected datasets
-  const actualData=sliced.map((v,i)=>{
-    const day=i+wS;
-    return(day>=MEU_ACTUAL_START&&day<=MEU_ACTUAL_END)?v:null;
-  });
-  const projData=sliced.map((v,i)=>{
-    const day=i+wS;
-    return day>MEU_ACTUAL_END?v:null;
-  });
-  // Bridge: last actual point connects to first projected
-  const bridgeIdx=sliced.findIndex((_,i)=>i+wS===MEU_ACTUAL_END);
-  if(bridgeIdx>=0&&bridgeIdx+1<projData.length){
-    projData[bridgeIdx]=sliced[bridgeIdx];
-  }
+  const keys=Object.keys(ITEM_META);
+  const slicedByKey=keys.map(key=>calcItemStock(key).slice(wS,wE+1));
+  const allVals=slicedByKey.flat().filter(v=>v!==null);
+  const yMin=allVals.length&&Math.min(...allVals)<0?Math.floor(Math.min(...allVals)/50)*50:0;
+  const yMax=allVals.length?Math.ceil(Math.max(...allVals,0)/50)*50||50:50;
 
-  const yMax=Math.max(...sliced.filter(v=>v!==null))*1.2||150;
+  const datasets=keys.map((key,i)=>{
+    const meta=ITEM_META[key];
+    return{
+      label:meta.name,
+      data:slicedByKey[i],
+      hidden:!showItem[key],
+      spanGaps:true,tension:0,
+      pointRadius:ctx=>ctx.dataset.data[ctx.dataIndex]!==null?3:0,
+      pointHoverRadius:5,
+      pointBackgroundColor:meta.color,pointBorderColor:'#fff',pointBorderWidth:1.5,
+      borderWidth:2,borderColor:meta.color,fill:false,
+    };
+  });
 
   const cfg={
-    type:'bar',
-    data:{labels,datasets:[
-      {
-        label:'Sets Sold (actual)',
-        data:actualData,
-        backgroundColor:'rgba(155,89,182,0.7)',
-        borderColor:'rgba(155,89,182,0.9)',
-        borderWidth:1,
-        borderRadius:3,
-        categoryPercentage:0.8,
-        barPercentage:0.9,
-      },
-      {
-        label:'Sets Sold (projected)',
-        data:projData,
-        backgroundColor:'rgba(155,89,182,0.2)',
-        borderColor:'rgba(155,89,182,0.4)',
-        borderWidth:1,
-        borderRadius:3,
-        borderDash:[4,3],
-        categoryPercentage:0.8,
-        barPercentage:0.9,
-      }
-    ]},
+    type:'line',
+    data:{labels,datasets},
     options:{
       responsive:true,maintainAspectRatio:false,animation:{duration:150},
       layout:{padding:{top:20,right:8,bottom:70}},
@@ -828,40 +834,37 @@ function buildMeuChart(meuValues){
       plugins:{
         legend:{display:false},
         tooltip:{
-          displayColors:false,
+          displayColors:true,
           backgroundColor:'rgba(30,30,28,0.92)',
           titleColor:'#B4B2A9',bodyColor:'#fff',
           padding:{x:12,y:10},borderColor:'rgba(136,135,128,0.2)',borderWidth:1,cornerRadius:6,
           callbacks:{
-            title:items=>items[0].label,
+            title:items=>items[0]?.label||'',
             label:item=>{
               const v=item.raw;
               if(v===null||v===undefined) return null;
-              const day=item.dataIndex+wS;
-              const tag=day<=MEU_ACTUAL_END?' (actual)':' (projected)';
-              return v.toLocaleString()+' sets sold'+tag;
+              const qty=v<0?Math.abs(v).toLocaleString()+' backordered':v.toLocaleString()+' in stock';
+              return `${item.dataset.label}: ${qty}`;
             },
             filter:item=>item.raw!==null&&item.raw!==undefined
           }
         },
-        today:{offset:wS},
       },
       scales:{
-        x:{display:false,stacked:false},
+        x:{display:false},
         y:{
-          min:0,
+          min:yMin,
           max:yMax,
-          ticks:{font:{size:11},color:'#888780',callback:v=>v.toLocaleString()},
-          grid:{color:'rgba(136,135,128,0.08)',lineWidth:0.5},
+          ticks:{font:{size:11},color:ctx=>ctx.tick.value<0?'rgba(192,57,43,0.7)':'#888780',callback:v=>v.toLocaleString()},
+          grid:{color:ctx=>ctx.tick.value===0?'rgba(136,135,128,0.4)':'rgba(136,135,128,0.08)',lineWidth:ctx=>ctx.tick.value===0?1.5:0.5},
           border:{display:false},
         }
       }
     },
-    plugins:[crosshairPlugin,{id:'todayMeu',afterDraw:(ch)=>{
-      const opts={offset:wS};
-      todayPlugin.afterDraw(ch,null,opts);
+    plugins:[crosshairPlugin,{id:'todayItems',afterDraw:(ch)=>{
+      todayPlugin.afterDraw(ch,null,{offset:wS});
     }},{
-      id:'maxis2',afterDraw:(ch)=>multiAxisPlugin.afterDraw(ch,null,{offset:wS})
+      id:'maxisItems',afterDraw:(ch)=>multiAxisPlugin.afterDraw(ch,null,{offset:wS})
     }]
   };
   if(meuChart) meuChart.destroy();
@@ -906,8 +909,7 @@ function update(){
   window.__lastCalc=calc.total; // email draft + stats key off the Total Units scenario
   renderStats(calc.total);
   buildChart(calc);
-  const meuValues=calcMeuData();
-  buildMeuChart(meuValues);
+  buildItemChart();
 }
 
 setTimeout(()=>{
@@ -924,6 +926,8 @@ buildSelects();
 renderRestockRows();
 renderRateTable();
 renderLiveStock();
+seedItemHistoryIfEmpty();
+renderItemLegend();
 update();
 loadLiveData();
 

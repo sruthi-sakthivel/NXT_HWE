@@ -102,7 +102,7 @@ async function main() {
   // index.html, not something Rush Order reports. Writing them here caused
   // dashboard edits to restocks to get silently overwritten by whatever was
   // last in data.json the moment the page fetched it.
-  let existing = { liveHistory: [] };
+  let existing = { liveHistory: [], itemHistory: {} };
   if (fs.existsSync(DATA_PATH)) {
     try { existing = JSON.parse(fs.readFileSync(DATA_PATH, 'utf8')); } catch (e) { /* start fresh */ }
   }
@@ -114,9 +114,26 @@ async function main() {
   history.push({ date: fmtDate(todayParts), day: today, balance });
   history.sort((a, b) => a.day - b.day);
 
+  // Per-SKU history for the 6 tips/sleeves consumables, same shape as
+  // liveHistory above (day-indexed balance = Available - Backorder). Kept
+  // separate from liveHistory, which is Smartbuds-specific and already
+  // depended on by other dashboard logic (email draft, stats cards).
+  const existingItemHistory = existing.itemHistory || {};
+  const itemHistory = {};
+  for (const [, info] of Object.entries(SKU_MAP)) {
+    if (info.key === 'earbuds') continue;
+    const it = items.find(i => i.key === info.key) || { available: 0, backorder: 0 };
+    const itBalance = it.available - it.backorder;
+    const itHistory = (existingItemHistory[info.key] || []).filter(h => h.day !== today);
+    itHistory.push({ date: fmtDate(todayParts), day: today, balance: itBalance });
+    itHistory.sort((a, b) => a.day - b.day);
+    itemHistory[info.key] = itHistory;
+  }
+
   const payload = {
     liveStock: { fetchedAt: fmtDisplayDate(todayParts), items },
     liveHistory: history,
+    itemHistory,
     lastRefreshed: now.toISOString(),
   };
 
