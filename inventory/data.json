@@ -1,6 +1,6 @@
 {
   "liveStock": {
-    "fetchedAt": "Jul 21, 2026",
+    "fetchedAt": "Jul 22, 2026",
     "items": [
       {
         "key": "earbuds",
@@ -8,14 +8,14 @@
         "sku": "NSSB0100-ZW",
         "available": 0,
         "committed": 7,
-        "backorder": 6
+        "backorder": 24
       },
       {
         "key": "tipsS",
         "name": "Tips — Small",
         "sku": "NSEMTA0201C-W",
-        "available": 380,
-        "committed": 119,
+        "available": 383,
+        "committed": 116,
         "backorder": 0
       },
       {
@@ -24,7 +24,7 @@
         "sku": "NSEMTB0201C-W",
         "available": 0,
         "committed": 21,
-        "backorder": 172
+        "backorder": 199
       },
       {
         "key": "tipsL",
@@ -48,7 +48,7 @@
         "sku": "NSEMWY0303T-W",
         "available": 0,
         "committed": 64,
-        "backorder": 74
+        "backorder": 98
       },
       {
         "key": "wingsL",
@@ -120,7 +120,56 @@
       "date": "2026-07-21",
       "day": 77,
       "balance": -6
+    },
+    {
+      "date": "2026-07-22",
+      "day": 78,
+      "balance": -24
     }
   ],
-  "lastRefreshed": "2026-07-21T17:41:49.926Z"
+  "itemHistory": {
+    "tipsS": [
+      {
+        "date": "2026-07-22",
+        "day": 78,
+        "balance": 383
+      }
+    ],
+    "tipsM": [
+      {
+        "date": "2026-07-22",
+        "day": 78,
+        "balance": -199
+      }
+    ],
+    "tipsL": [
+      {
+        "date": "2026-07-22",
+        "day": 78,
+        "balance": 389
+      }
+    ],
+    "wingsS": [
+      {
+        "date": "2026-07-22",
+        "day": 78,
+        "balance": -176
+      }
+    ],
+    "wingsM": [
+      {
+        "date": "2026-07-22",
+        "day": 78,
+        "balance": -98
+      }
+    ],
+    "wingsL": [
+      {
+        "date": "2026-07-22",
+        "day": 78,
+        "balance": 171
+      }
+    ]
+  },
+  "lastRefreshed": "2026-07-22T16:03:15.972Z"
 }
