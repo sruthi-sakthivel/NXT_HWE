@@ -604,22 +604,6 @@ const crosshairPlugin={id:'xhair',afterDraw(ch){
   ctx.beginPath();ctx.moveTo(px,top);ctx.lineTo(px,bottom);ctx.stroke();ctx.restore();
 }};
 
-const todayPlugin={id:'today',afterDraw(ch,_,opts){
-  if(!ch.scales?.x) return;
-  const off=opts.offset||0,tDay=TODAY_DAY-off;
-  if(tDay<0||tDay>ch.data.labels.length-1) return;
-  const{ctx,chartArea:{top,bottom},scales:{x}}=ch;
-  const px=x.getPixelForValue(tDay);
-  ctx.save();
-  ctx.strokeStyle='rgba(95,94,90,0.7)';ctx.lineWidth=1.5;ctx.setLineDash([4,4]);
-  ctx.beginPath();ctx.moveTo(px,top);ctx.lineTo(px,bottom);ctx.stroke();ctx.setLineDash([]);
-  const lbl='Today';ctx.font='500 10px system-ui,sans-serif';ctx.textAlign='center';ctx.textBaseline='middle';
-  const tw=ctx.measureText(lbl).width,pw=tw+10,ph=16,px0=px-pw/2,py0=top+4;
-  ctx.fillStyle='rgba(95,94,90,0.15)';ctx.beginPath();ctx.roundRect(px0,py0,pw,ph,3);ctx.fill();
-  ctx.fillStyle='#5F5E5A';ctx.fillText(lbl,px,py0+ph/2);
-  ctx.restore();
-}};
-
 // Unified marker system for restocks + today on the main chart.
 // Top-anchored pill labels go through shared lane assignment so close
 // dates stack vertically instead of overlapping each other.
@@ -868,7 +852,10 @@ function buildItemChart(){
     data:{labels,datasets},
     options:{
       responsive:true,maintainAspectRatio:false,animation:{duration:150},
-      layout:{padding:{top:20,right:8,bottom:70}},
+      // Top padding reserves room for the "Today" pill above the plot
+      // (via markersPlugin below) instead of it drawing inside the chart
+      // area and overlapping the data lines.
+      layout:{padding:{top:45,right:8,bottom:70}},
       interaction:{mode:'index',intersect:false},
       plugins:{
         legend:{display:false},
@@ -888,6 +875,10 @@ function buildItemChart(){
             filter:item=>item.raw!==null&&item.raw!==undefined
           }
         },
+        // Reuses the same marker system as the Smartbuds chart (restock
+        // pills + "Today"), but with no restocks — this chart only needs
+        // the "Today" line/pill, drawn in the reserved top margin.
+        markers:{restocks:[],offset:wS},
       },
       scales:{
         x:{display:false},
@@ -900,9 +891,7 @@ function buildItemChart(){
         }
       }
     },
-    plugins:[crosshairPlugin,{id:'todayItems',afterDraw:(ch)=>{
-      todayPlugin.afterDraw(ch,null,{offset:wS});
-    }},{
+    plugins:[crosshairPlugin,markersPlugin,{
       id:'maxisItems',afterDraw:(ch)=>multiAxisPlugin.afterDraw(ch,null,{offset:wS})
     }]
   };
