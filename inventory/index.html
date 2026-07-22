@@ -195,6 +195,14 @@ input[type=number]{width:70px;text-align:right;}
     <div class="section-title">Tips &amp; Sleeves — Live Stock (Rush Order)</div>
   </div>
 
+  <div class="window-bar">
+    <span class="wl">View:</span>
+    <select id="selItemStart"></select>
+    <span class="wl">to</span>
+    <select id="selItemEnd"></select>
+    <button class="pbtn" id="btnItemFullYear">Full year</button>
+  </div>
+
   <div class="chart-outer">
     <div class="y-axis-label">Units in Stock / Backorder</div>
     <div class="chart-wrap-sm">
@@ -413,6 +421,30 @@ function buildSelects(){
 document.getElementById('btnFullYear').addEventListener('click',()=>{
   viewStart=0;viewEnd=7;buildSelects();update();
 });
+
+// Independent view window for the Tips & Sleeves chart — defaults to
+// Jul-Dec since there's no item data before tracking began in July,
+// unlike the Smartbuds chart above which has real data back to May.
+let itemViewStart=2, itemViewEnd=7;
+
+function buildItemSelects(){
+  const ss=document.getElementById('selItemStart');
+  const se=document.getElementById('selItemEnd');
+  ss.innerHTML=MONTHS.slice(0,-1).map((m,i)=>`<option value="${i}"${i===itemViewStart?' selected':''}>${m.name}</option>`).join('');
+  se.innerHTML=MONTHS.slice(1).map((m,i)=>`<option value="${i+1}"${(i+1)===itemViewEnd?' selected':''}>${m.name}</option>`).join('');
+  document.getElementById('btnItemFullYear').classList.toggle('active',itemViewStart===2&&itemViewEnd===7);
+}
+
+document.getElementById('btnItemFullYear').addEventListener('click',()=>{
+  itemViewStart=2;itemViewEnd=7;buildItemSelects();buildItemChart();
+});
+
+document.getElementById('selItemStart').onchange=function(){
+  itemViewStart=+this.value;if(itemViewEnd<=itemViewStart) itemViewEnd=itemViewStart+1;buildItemSelects();buildItemChart();
+};
+document.getElementById('selItemEnd').onchange=function(){
+  itemViewEnd=+this.value;if(itemViewStart>=itemViewEnd) itemViewStart=itemViewEnd-1;buildItemSelects();buildItemChart();
+};
 
 function renderRestockRows(){
   const c=document.getElementById('restockRows');
@@ -807,7 +839,7 @@ function buildChart(calc){
 }
 
 function buildItemChart(){
-  const wS=MONTHS[viewStart].start,wE=MONTHS[viewEnd].end;
+  const wS=MONTHS[itemViewStart].start,wE=MONTHS[itemViewEnd].end;
   const labels=[];
   for(let i=wS;i<=wE;i++) labels.push(fmtDate(dayToDate(i)));
 
@@ -930,6 +962,7 @@ setTimeout(()=>{
 
 
 buildSelects();
+buildItemSelects();
 renderRestockRows();
 renderRateTable();
 renderLiveStock();
