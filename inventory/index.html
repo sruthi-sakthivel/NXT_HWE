@@ -876,9 +876,11 @@ function buildItemChart(){
           }
         },
         // Reuses the same marker system as the Smartbuds chart (restock
-        // pills + "Today"), but with no restocks — this chart only needs
-        // the "Today" line/pill, drawn in the reserved top margin.
-        markers:{restocks:[],offset:wS},
+        // pills + "Today"), but with no restocks and live-pull dots turned
+        // off — those are Smartbuds-specific (LIVE_HISTORY) and were
+        // otherwise plotting Smartbuds balance values against this chart's
+        // own (unrelated) y-scale, landing right on top of the item lines.
+        markers:{restocks:[],offset:wS,showLive:false},
       },
       scales:{
         x:{display:false},
