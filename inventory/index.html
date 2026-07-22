@@ -204,6 +204,12 @@ input[type=number]{width:70px;text-align:right;}
 
   <div class="leg" id="itemLegend"></div>
   <div class="leg-hint">💡 Click an item above to show/hide it. Points only appear from the day Rush Order tracking began for that SKU — there's no way to backfill earlier days.</div>
+  <div class="leg" style="margin-top:-8px;">
+    <span class="li li-toggle" id="btnItemHistory" style="margin-left:auto;color:#D6336C;font-weight:600;">📋 Live history ▾</span>
+  </div>
+  <div id="itemHistoryPanel" style="display:none;margin:-4px 0 14px;overflow-x:auto;">
+    <table class="ep-tbl2" id="itemHistoryTable" style="width:100%;"></table>
+  </div>
 
   <div class="modal-overlay" id="emailModal">
     <div class="modal-box">
@@ -310,6 +316,7 @@ async function loadLiveData(){
     renderLiveStock();
     renderLiveHistoryTable();
     seedItemHistoryIfEmpty();
+    renderItemHistoryTable();
     update();
   }catch(e){
     // no data.json available — keep using fallback values, no error shown
@@ -340,12 +347,12 @@ const ACTUAL_END=48; // last actual = day 48 (Jun 22)
 // (see ITEM_HISTORY above), same pattern as the Smartbuds live history.
 // No projection here, just real pulled data accumulating one point per day.
 const ITEM_META={
-  tipsS:  {name:'Tips — Small',     color:'#378ADD'},
-  tipsM:  {name:'Tips — Medium',    color:'#16A085'},
-  tipsL:  {name:'Tips — Large',     color:'#9B59B6'},
-  wingsS: {name:'Sleeves — Small',  color:'#E67E22'},
-  wingsM: {name:'Sleeves — Medium', color:'#C0392B'},
-  wingsL: {name:'Sleeves — Large',  color:'#34495E'},
+  tipsS:  {name:'Tips — Small',     shortName:'Tips S',    color:'#378ADD'},
+  tipsM:  {name:'Tips — Medium',    shortName:'Tips M',    color:'#16A085'},
+  tipsL:  {name:'Tips — Large',     shortName:'Tips L',    color:'#9B59B6'},
+  wingsS: {name:'Sleeves — Small',  shortName:'Sleeves S', color:'#E67E22'},
+  wingsM: {name:'Sleeves — Medium', shortName:'Sleeves M', color:'#C0392B'},
+  wingsL: {name:'Sleeves — Large',  shortName:'Sleeves L', color:'#34495E'},
 };
 
 const START=new Date(2026,4,5); // May 5
@@ -968,6 +975,43 @@ document.getElementById('btnLiveHistory').addEventListener('click',()=>{
   document.getElementById('liveHistoryPanel').style.display=liveHistoryOpen?'block':'none';
   document.getElementById('btnLiveHistory').textContent=liveHistoryOpen?'📋 Live history ▴':'📋 Live history ▾';
   if(liveHistoryOpen) renderLiveHistoryTable();
+});
+
+// One row per day, one column per SKU — since all 6 SKUs come from the
+// same daily Rush Order pull, their dates line up naturally.
+function renderItemHistoryTable(){
+  const tbl=document.getElementById('itemHistoryTable');
+  const keys=Object.keys(ITEM_META);
+  const dayMap={};
+  keys.forEach(key=>{
+    (ITEM_HISTORY[key]||[]).forEach(h=>{
+      if(!dayMap[h.day]) dayMap[h.day]={date:h.date};
+      dayMap[h.day][key]=h.balance;
+    });
+  });
+  const days=Object.keys(dayMap).map(Number).sort((a,b)=>a-b);
+  const header=`<tr><th>Date</th>${keys.map(k=>`<th style="text-align:right;">${ITEM_META[k].shortName}</th>`).join('')}</tr>`;
+  const rows=days.map(day=>{
+    const row=dayMap[day];
+    const cells=keys.map(k=>{
+      const v=row[k];
+      if(v===undefined) return `<td style="text-align:right;color:#888780;">—</td>`;
+      const str=(v>0?'+':'')+v.toLocaleString();
+      const color=v<0?'#c0392b':'#378ADD';
+      return `<td style="text-align:right;color:${color};">${str}</td>`;
+    }).join('');
+    return `<tr><td>${row.date}</td>${cells}</tr>`;
+  }).join('');
+  tbl.innerHTML=header+(rows||'<tr><td colspan="7">No live history recorded yet</td></tr>');
+}
+renderItemHistoryTable();
+
+let itemHistoryOpen=false;
+document.getElementById('btnItemHistory').addEventListener('click',()=>{
+  itemHistoryOpen=!itemHistoryOpen;
+  document.getElementById('itemHistoryPanel').style.display=itemHistoryOpen?'block':'none';
+  document.getElementById('btnItemHistory').textContent=itemHistoryOpen?'📋 Live history ▴':'📋 Live history ▾';
+  if(itemHistoryOpen) renderItemHistoryTable();
 });
 
 // ---------- Email draft feature ----------
