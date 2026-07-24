@@ -244,9 +244,8 @@ input[type=number]{width:70px;text-align:right;}
   </div>
 
   <div class="leg">
-    <span class="li"><span style="width:14px;height:14px;background:#1D9E75;display:inline-block;border-radius:3px;"></span>MP3 MEUs</span>
-    <span class="li"><span style="width:14px;height:14px;background:#D97706;display:inline-block;border-radius:3px;"></span>MP4 MEUs</span>
-    <span class="li"><span style="width:14px;height:14px;background:rgba(136,135,128,0.35);border:1px dashed rgba(136,135,128,0.6);display:inline-block;border-radius:3px;"></span>Planned</span>
+    <span class="li"><span style="width:14px;height:14px;background:#1D9E75;display:inline-block;border-radius:3px;"></span>MP3</span>
+    <span class="li"><span style="width:14px;height:14px;background:#D97706;display:inline-block;border-radius:3px;"></span>MP4</span>
     <span class="li"><span style="width:20px;height:1px;border-top:1.5px dashed #5F5E5A;display:inline-block;"></span>Today</span>
   </div>
 
@@ -463,7 +462,6 @@ const TX_BATCHES=[
   {date:'2026-04-07', liters:12, batch:'260407A-12L-FJ', product:'MP3'},
   {date:'2026-07-21', liters:12, batch:'260721A-12L-NC', code:'TX2S-V', product:'MP4'},
   {date:'2026-07-21', liters:12, batch:'260721B-12L-NC', code:'TX2S-V', product:'MP4'},
-  {date:'2026-09-15', liters:24, product:'MP4', planned:true},
 ];
 
 function parseDate(s){const[y,m,d]=s.split('-').map(Number);return new Date(y,m-1,d);}
@@ -1049,7 +1047,7 @@ function buildTxChart(){
             label:item=>{
               const row=meta[item.dataIndex];
               if(!row) return null;
-              const lines=[`${row.liters}L ${row.planned?'planned':'produced'} (${row.product} MEUs)`];
+              const lines=[`${row.liters}L ${row.planned?'planned':'produced'} (${row.product})`];
               row.batches.forEach(b=>{
                 if(b.batch) lines.push(`${b.code||''} ${b.batch}`.trim());
               });
