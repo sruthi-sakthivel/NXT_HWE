@@ -219,6 +219,18 @@ input[type=number]{width:70px;text-align:right;}
     <table class="ep-tbl2" id="itemHistoryTable" style="width:100%;"></table>
   </div>
 
+  <!-- TX (Tecticoat) production -->
+  <div class="section-divider">
+    <div class="section-title">TX — Tecticoat Production</div>
+  </div>
+
+  <div class="chart-outer">
+    <div class="y-axis-label">Liters Produced</div>
+    <div class="chart-wrap-sm">
+      <canvas id="txChart"></canvas>
+    </div>
+  </div>
+
   <div class="modal-overlay" id="emailModal">
     <div class="modal-box">
       <div class="modal-head">
@@ -403,7 +415,18 @@ const PRODUCT_COLOR={MP3:'#1D9E75',MP4:'#D97706'};
 
 const TODAY=new Date();
 const TODAY_DAY=Math.round((new Date(TODAY.getFullYear(),TODAY.getMonth(),TODAY.getDate())-START)/86400000);
-let chart=null, meuChart=null;
+let chart=null, meuChart=null, txChart=null;
+
+// Tecticoat (TX) production batches — manually recorded, not pulled from
+// Rush Order. Multiple batches on the same day are summed into that day's
+// bar; each batch's ID/code is kept for the tooltip.
+const TX_BATCHES=[
+  {date:'2026-03-16', liters:12},
+  {date:'2026-04-06', liters:12},
+  {date:'2026-04-07', liters:12},
+  {date:'2026-07-21', liters:12, batch:'260721A-12L-NC', code:'TX2S-V'},
+  {date:'2026-07-21', liters:12, batch:'260721B-12L-NC', code:'TX2S-V'},
+];
 
 function parseDate(s){const[y,m,d]=s.split('-').map(Number);return new Date(y,m-1,d);}
 function daysBetween(a,b){return Math.round((b-a)/86400000);}
@@ -901,6 +924,75 @@ function buildItemChart(){
   meuChart=new Chart(document.getElementById('meuChart'),cfg);
 }
 
+function calcTxByDate(){
+  const map={};
+  TX_BATCHES.forEach(b=>{
+    if(!map[b.date]) map[b.date]={liters:0,batches:[]};
+    map[b.date].liters+=b.liters;
+    map[b.date].batches.push(b);
+  });
+  return Object.keys(map).sort().map(date=>({date,liters:map[date].liters,batches:map[date].batches}));
+}
+
+function buildTxChart(){
+  const rows=calcTxByDate();
+  const labels=rows.map(r=>fmtDate(parseDate(r.date)));
+  const data=rows.map(r=>r.liters);
+
+  const cfg={
+    type:'bar',
+    data:{labels,datasets:[{
+      label:'Liters produced',
+      data,
+      backgroundColor:'rgba(52,73,94,0.7)',
+      borderColor:'rgba(52,73,94,0.9)',
+      borderWidth:1,
+      borderRadius:4,
+      categoryPercentage:0.6,
+      barPercentage:0.7,
+    }]},
+    options:{
+      responsive:true,maintainAspectRatio:false,animation:{duration:150},
+      layout:{padding:{top:20,right:8,bottom:10}},
+      interaction:{mode:'index',intersect:false},
+      plugins:{
+        legend:{display:false},
+        tooltip:{
+          displayColors:false,
+          backgroundColor:'rgba(30,30,28,0.92)',
+          titleColor:'#B4B2A9',bodyColor:'#fff',
+          padding:{x:12,y:10},borderColor:'rgba(136,135,128,0.2)',borderWidth:1,cornerRadius:6,
+          callbacks:{
+            title:items=>items[0]?.label||'',
+            label:item=>{
+              const row=rows[item.dataIndex];
+              const lines=[`${row.liters}L produced`];
+              row.batches.forEach(b=>{
+                if(b.batch) lines.push(`${b.code||''} ${b.batch}`.trim());
+              });
+              return lines;
+            }
+          }
+        },
+      },
+      scales:{
+        x:{
+          grid:{display:false},
+          ticks:{font:{size:11},color:'#888780'},
+        },
+        y:{
+          min:0,
+          ticks:{font:{size:11},color:'#888780',callback:v=>v.toLocaleString()+'L'},
+          grid:{color:'rgba(136,135,128,0.08)',lineWidth:0.5},
+          border:{display:false},
+        }
+      }
+    },
+  };
+  if(txChart) txChart.destroy();
+  txChart=new Chart(document.getElementById('txChart'),cfg);
+}
+
 // Static (doesn't depend on restocks/live data/toggles) — average daily
 // units sold per period, straight from the spreadsheet arrays. Mirrors the
 // old hardcoded "Direct units / day" table's period boundaries but now
@@ -940,6 +1032,7 @@ function update(){
   renderStats(calc.total);
   buildChart(calc);
   buildItemChart();
+  buildTxChart();
 }
 
 setTimeout(()=>{
