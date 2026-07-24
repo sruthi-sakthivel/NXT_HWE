@@ -221,7 +221,15 @@ input[type=number]{width:70px;text-align:right;}
 
   <!-- TX (Tecticoat) production -->
   <div class="section-divider">
-    <div class="section-title">TX — Tecticoat Production</div>
+    <div class="section-title">Tecticoat Production</div>
+  </div>
+
+  <div class="window-bar">
+    <span class="wl">View:</span>
+    <select id="selTxStart"></select>
+    <span class="wl">to</span>
+    <select id="selTxEnd"></select>
+    <button class="pbtn" id="btnTxFullYear">Full year</button>
   </div>
 
   <div class="chart-outer">
@@ -229,6 +237,13 @@ input[type=number]{width:70px;text-align:right;}
     <div class="chart-wrap-sm">
       <canvas id="txChart"></canvas>
     </div>
+  </div>
+
+  <div class="leg">
+    <span class="li"><span style="width:14px;height:14px;background:#1D9E75;display:inline-block;border-radius:3px;"></span>MP3</span>
+    <span class="li"><span style="width:14px;height:14px;background:#D97706;display:inline-block;border-radius:3px;"></span>MP4</span>
+    <span class="li"><span style="width:14px;height:14px;background:rgba(136,135,128,0.35);border:1px dashed rgba(136,135,128,0.6);display:inline-block;border-radius:3px;"></span>Planned</span>
+    <span class="li"><span style="width:20px;height:1px;border-top:1.5px dashed #5F5E5A;display:inline-block;"></span>Today</span>
   </div>
 
   <div class="modal-overlay" id="emailModal">
@@ -397,6 +412,24 @@ const MONTHS=[
   {name:'Dec', start:210, end:240},
 ];
 
+const MONTH_NAMES=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+function monthRange(year,monthIdx0){
+  const first=new Date(year,monthIdx0,1);
+  const last=new Date(year,monthIdx0+1,0); // day 0 of next month = last day of this one
+  return{start:daysBetween(START,first),end:daysBetween(START,last)};
+}
+// TX chart's own month range, starting in March (its earliest real batch) —
+// unlike the Smartbuds/Item charts which start at day 0 (May 5), TX batches
+// predate that, so these use negative day indices relative to the same
+// START epoch. Computed rather than hand-written to avoid arithmetic slips.
+const MONTHS_TX=[2,3,4,5,6,7,8,9,10,11].map(m=>({name:MONTH_NAMES[m],...monthRange(2026,m)}));
+
+function hexToRgba(hex,alpha){
+  const h=hex.replace('#','');
+  const r=parseInt(h.substring(0,2),16),g=parseInt(h.substring(2,4),16),b=parseInt(h.substring(4,6),16);
+  return `rgba(${r},${g},${b},${alpha})`;
+}
+
 let viewStart=0, viewEnd=7;
 let showTotal=true, showDirect=true;
 let restocks=[
@@ -421,11 +454,12 @@ let chart=null, meuChart=null, txChart=null;
 // Rush Order. Multiple batches on the same day are summed into that day's
 // bar; each batch's ID/code is kept for the tooltip.
 const TX_BATCHES=[
-  {date:'2026-03-16', liters:12},
-  {date:'2026-04-06', liters:12},
-  {date:'2026-04-07', liters:12},
-  {date:'2026-07-21', liters:12, batch:'260721A-12L-NC', code:'TX2S-V'},
-  {date:'2026-07-21', liters:12, batch:'260721B-12L-NC', code:'TX2S-V'},
+  {date:'2026-03-16', liters:12, batch:'260316A-12L-FJ', product:'MP3'},
+  {date:'2026-04-06', liters:12, batch:'260406A-12L-FJ', product:'MP3'},
+  {date:'2026-04-07', liters:12, batch:'260407A-12L-FJ', product:'MP3'},
+  {date:'2026-07-21', liters:12, batch:'260721A-12L-NC', code:'TX2S-V', product:'MP4'},
+  {date:'2026-07-21', liters:12, batch:'260721B-12L-NC', code:'TX2S-V', product:'MP4'},
+  {date:'2026-09-15', liters:24, product:'MP4', planned:true},
 ];
 
 function parseDate(s){const[y,m,d]=s.split('-').map(Number);return new Date(y,m-1,d);}
@@ -467,6 +501,31 @@ document.getElementById('selItemStart').onchange=function(){
 };
 document.getElementById('selItemEnd').onchange=function(){
   itemViewEnd=+this.value;if(itemViewStart>=itemViewEnd) itemViewStart=itemViewEnd-1;buildItemSelects();buildItemChart();
+};
+
+// Independent view window for the TX production chart. Defaults to the
+// widest range (Mar-Dec, i.e. all of MONTHS_TX) since there are only a
+// handful of sparse production dates — a narrower default would likely
+// hide most of them.
+let txViewStart=0, txViewEnd=MONTHS_TX.length-1;
+
+function buildTxSelects(){
+  const ss=document.getElementById('selTxStart');
+  const se=document.getElementById('selTxEnd');
+  ss.innerHTML=MONTHS_TX.slice(0,-1).map((m,i)=>`<option value="${i}"${i===txViewStart?' selected':''}>${m.name}</option>`).join('');
+  se.innerHTML=MONTHS_TX.slice(1).map((m,i)=>`<option value="${i+1}"${(i+1)===txViewEnd?' selected':''}>${m.name}</option>`).join('');
+  document.getElementById('btnTxFullYear').classList.toggle('active',txViewStart===0&&txViewEnd===MONTHS_TX.length-1);
+}
+
+document.getElementById('btnTxFullYear').addEventListener('click',()=>{
+  txViewStart=0;txViewEnd=MONTHS_TX.length-1;buildTxSelects();buildTxChart();
+});
+
+document.getElementById('selTxStart').onchange=function(){
+  txViewStart=+this.value;if(txViewEnd<=txViewStart) txViewEnd=txViewStart+1;buildTxSelects();buildTxChart();
+};
+document.getElementById('selTxEnd').onchange=function(){
+  txViewEnd=+this.value;if(txViewStart>=txViewEnd) txViewStart=txViewEnd-1;buildTxSelects();buildTxChart();
 };
 
 function renderRestockRows(){
@@ -924,28 +983,47 @@ function buildItemChart(){
   meuChart=new Chart(document.getElementById('meuChart'),cfg);
 }
 
-function calcTxByDate(){
+// Keyed by day-index (relative to the shared START epoch), not by date
+// string — a day can have multiple batches (e.g. two 12L batches same
+// day), summed into one bar. product/planned reflect that day's batches
+// (this dataset never mixes products or planned/actual on the same day).
+function calcTxByDay(){
   const map={};
   TX_BATCHES.forEach(b=>{
-    if(!map[b.date]) map[b.date]={liters:0,batches:[]};
-    map[b.date].liters+=b.liters;
-    map[b.date].batches.push(b);
+    const day=daysBetween(START,parseDate(b.date));
+    if(!map[day]) map[day]={liters:0,batches:[],product:b.product,planned:false};
+    map[day].liters+=b.liters;
+    map[day].batches.push(b);
+    if(b.planned) map[day].planned=true;
   });
-  return Object.keys(map).sort().map(date=>({date,liters:map[date].liters,batches:map[date].batches}));
+  return map;
 }
 
 function buildTxChart(){
-  const rows=calcTxByDate();
-  const labels=rows.map(r=>fmtDate(parseDate(r.date)));
-  const data=rows.map(r=>r.liters);
+  const wS=MONTHS_TX[txViewStart].start,wE=MONTHS_TX[txViewEnd].end;
+  const dayMap=calcTxByDay();
+  const labels=[],data=[],meta=[];
+  for(let d=wS;d<=wE;d++){
+    labels.push(fmtDate(dayToDate(d)));
+    const row=dayMap[d]||null;
+    data.push(row?row.liters:null);
+    meta.push(row);
+  }
+
+  const colorFor=(m,alpha)=>{
+    if(!m) return 'transparent';
+    if(m.planned) return `rgba(136,135,128,${alpha})`;
+    return hexToRgba(PRODUCT_COLOR[m.product]||'#9B59B6',alpha);
+  };
 
   const cfg={
     type:'bar',
     data:{labels,datasets:[{
       label:'Liters produced',
       data,
-      backgroundColor:'rgba(52,73,94,0.7)',
-      borderColor:'rgba(52,73,94,0.9)',
+      backgroundColor:ctx=>colorFor(meta[ctx.dataIndex],0.75),
+      borderColor:ctx=>colorFor(meta[ctx.dataIndex],0.95),
+      borderDash:ctx=>meta[ctx.dataIndex]&&meta[ctx.dataIndex].planned?[4,3]:[],
       borderWidth:1,
       borderRadius:4,
       categoryPercentage:0.6,
@@ -953,7 +1031,7 @@ function buildTxChart(){
     }]},
     options:{
       responsive:true,maintainAspectRatio:false,animation:{duration:150},
-      layout:{padding:{top:20,right:8,bottom:10}},
+      layout:{padding:{top:45,right:8,bottom:70}},
       interaction:{mode:'index',intersect:false},
       plugins:{
         legend:{display:false},
@@ -965,21 +1043,21 @@ function buildTxChart(){
           callbacks:{
             title:items=>items[0]?.label||'',
             label:item=>{
-              const row=rows[item.dataIndex];
-              const lines=[`${row.liters}L produced`];
+              const row=meta[item.dataIndex];
+              if(!row) return null;
+              const lines=[`${row.liters}L ${row.planned?'planned':'produced'} (${row.product})`];
               row.batches.forEach(b=>{
                 if(b.batch) lines.push(`${b.code||''} ${b.batch}`.trim());
               });
               return lines;
-            }
+            },
+            filter:item=>meta[item.dataIndex]!==null
           }
         },
+        markers:{restocks:[],offset:wS,showLive:false},
       },
       scales:{
-        x:{
-          grid:{display:false},
-          ticks:{font:{size:11},color:'#888780'},
-        },
+        x:{display:false},
         y:{
           min:0,
           ticks:{font:{size:11},color:'#888780',callback:v=>v.toLocaleString()+'L'},
@@ -988,6 +1066,9 @@ function buildTxChart(){
         }
       }
     },
+    plugins:[crosshairPlugin,markersPlugin,{
+      id:'maxisTx',afterDraw:(ch)=>multiAxisPlugin.afterDraw(ch,null,{offset:wS})
+    }]
   };
   if(txChart) txChart.destroy();
   txChart=new Chart(document.getElementById('txChart'),cfg);
@@ -1047,6 +1128,7 @@ setTimeout(()=>{
 
 buildSelects();
 buildItemSelects();
+buildTxSelects();
 renderRestockRows();
 renderRateTable();
 renderLiveStock();
