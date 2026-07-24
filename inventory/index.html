@@ -240,8 +240,8 @@ input[type=number]{width:70px;text-align:right;}
   </div>
 
   <div class="leg">
-    <span class="li"><span style="width:14px;height:14px;background:#1D9E75;display:inline-block;border-radius:3px;"></span>MP3</span>
-    <span class="li"><span style="width:14px;height:14px;background:#D97706;display:inline-block;border-radius:3px;"></span>MP4</span>
+    <span class="li"><span style="width:14px;height:14px;background:#1D9E75;display:inline-block;border-radius:3px;"></span>MP3 MEUs</span>
+    <span class="li"><span style="width:14px;height:14px;background:#D97706;display:inline-block;border-radius:3px;"></span>MP4 MEUs</span>
     <span class="li"><span style="width:14px;height:14px;background:rgba(136,135,128,0.35);border:1px dashed rgba(136,135,128,0.6);display:inline-block;border-radius:3px;"></span>Planned</span>
     <span class="li"><span style="width:20px;height:1px;border-top:1.5px dashed #5F5E5A;display:inline-block;"></span>Today</span>
   </div>
@@ -1045,7 +1045,7 @@ function buildTxChart(){
             label:item=>{
               const row=meta[item.dataIndex];
               if(!row) return null;
-              const lines=[`${row.liters}L ${row.planned?'planned':'produced'} (${row.product})`];
+              const lines=[`${row.liters}L ${row.planned?'planned':'produced'} (${row.product} MEUs)`];
               row.batches.forEach(b=>{
                 if(b.batch) lines.push(`${b.code||''} ${b.batch}`.trim());
               });
