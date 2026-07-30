@@ -1,14 +1,14 @@
 {
   "liveStock": {
-    "fetchedAt": "Jul 29, 2026",
+    "fetchedAt": "Jul 30, 2026",
     "items": [
       {
         "key": "earbuds",
         "name": "Smartbuds",
         "sku": "NSSB0100-ZW",
-        "available": 0,
+        "available": 1,
         "committed": 1,
-        "backorder": 167
+        "backorder": 181
       },
       {
         "key": "tipsS",
@@ -22,7 +22,7 @@
         "key": "tipsM",
         "name": "Tips — Medium",
         "sku": "NSEMTB0201C-W",
-        "available": 0,
+        "available": 3,
         "committed": 21,
         "backorder": 232
       },
@@ -54,7 +54,7 @@
         "key": "wingsL",
         "name": "Sleeves — Large",
         "sku": "NSEMWX0103T-W",
-        "available": 132,
+        "available": 135,
         "committed": 63,
         "backorder": 0
       }
@@ -160,6 +160,11 @@
       "date": "2026-07-29",
       "day": 85,
       "balance": -167
+    },
+    {
+      "date": "2026-07-30",
+      "day": 86,
+      "balance": -180
     }
   ],
   "itemHistory": {
@@ -208,6 +213,11 @@
         "date": "2026-07-29",
         "day": 85,
         "balance": 392
+      },
+      {
+        "date": "2026-07-30",
+        "day": 86,
+        "balance": 392
       }
     ],
     "tipsM": [
@@ -255,6 +265,11 @@
         "date": "2026-07-29",
         "day": 85,
         "balance": -232
+      },
+      {
+        "date": "2026-07-30",
+        "day": 86,
+        "balance": -229
       }
     ],
     "tipsL": [
@@ -301,6 +316,11 @@
       {
         "date": "2026-07-29",
         "day": 85,
+        "balance": 341
+      },
+      {
+        "date": "2026-07-30",
+        "day": 86,
         "balance": 341
       }
     ],
@@ -349,6 +369,11 @@
         "date": "2026-07-29",
         "day": 85,
         "balance": -191
+      },
+      {
+        "date": "2026-07-30",
+        "day": 86,
+        "balance": -191
       }
     ],
     "wingsM": [
@@ -395,6 +420,11 @@
       {
         "date": "2026-07-29",
         "day": 85,
+        "balance": -116
+      },
+      {
+        "date": "2026-07-30",
+        "day": 86,
         "balance": -116
       }
     ],
@@ -443,8 +473,13 @@
         "date": "2026-07-29",
         "day": 85,
         "balance": 132
+      },
+      {
+        "date": "2026-07-30",
+        "day": 86,
+        "balance": 135
       }
     ]
   },
-  "lastRefreshed": "2026-07-29T17:34:22.854Z"
+  "lastRefreshed": "2026-07-30T16:03:22.220Z"
 }
