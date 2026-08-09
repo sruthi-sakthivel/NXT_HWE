@@ -1,6 +1,6 @@
 {
   "liveStock": {
-    "fetchedAt": "Aug 8, 2026",
+    "fetchedAt": "Aug 9, 2026",
     "items": [
       {
         "key": "earbuds",
@@ -8,14 +8,14 @@
         "sku": "NSSB0100-ZW",
         "available": 0,
         "committed": 1,
-        "backorder": 349
+        "backorder": 360
       },
       {
         "key": "tipsS",
         "name": "Tips — Small",
         "sku": "NSEMTA0201C-W",
-        "available": 386,
-        "committed": 110,
+        "available": 374,
+        "committed": 122,
         "backorder": 0
       },
       {
@@ -54,8 +54,8 @@
         "key": "wingsL",
         "name": "Sleeves — Large",
         "sku": "NSEMWX0103T-W",
-        "available": 57,
-        "committed": 55,
+        "available": 45,
+        "committed": 67,
         "backorder": 0
       }
     ]
@@ -205,6 +205,11 @@
       "date": "2026-08-08",
       "day": 95,
       "balance": -349
+    },
+    {
+      "date": "2026-08-09",
+      "day": 96,
+      "balance": -360
     }
   ],
   "itemHistory": {
@@ -298,6 +303,11 @@
         "date": "2026-08-08",
         "day": 95,
         "balance": 386
+      },
+      {
+        "date": "2026-08-09",
+        "day": 96,
+        "balance": 374
       }
     ],
     "tipsM": [
@@ -389,6 +399,11 @@
       {
         "date": "2026-08-08",
         "day": 95,
+        "balance": -269
+      },
+      {
+        "date": "2026-08-09",
+        "day": 96,
         "balance": -269
       }
     ],
@@ -482,6 +497,11 @@
         "date": "2026-08-08",
         "day": 95,
         "balance": 258
+      },
+      {
+        "date": "2026-08-09",
+        "day": 96,
+        "balance": 258
       }
     ],
     "wingsS": [
@@ -573,6 +593,11 @@
       {
         "date": "2026-08-08",
         "day": 95,
+        "balance": -194
+      },
+      {
+        "date": "2026-08-09",
+        "day": 96,
         "balance": -194
       }
     ],
@@ -666,6 +691,11 @@
         "date": "2026-08-08",
         "day": 95,
         "balance": -164
+      },
+      {
+        "date": "2026-08-09",
+        "day": 96,
+        "balance": -164
       }
     ],
     "wingsL": [
@@ -758,8 +788,13 @@
         "date": "2026-08-08",
         "day": 95,
         "balance": 57
+      },
+      {
+        "date": "2026-08-09",
+        "day": 96,
+        "balance": 45
       }
     ]
   },
-  "lastRefreshed": "2026-08-08T16:49:22.879Z"
+  "lastRefreshed": "2026-08-09T16:03:14.181Z"
 }
