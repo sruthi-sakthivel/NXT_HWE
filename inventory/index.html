@@ -215,7 +215,11 @@ input[type=number]{width:70px;text-align:right;}
   </div>
 
   <div class="leg" id="itemLegend"></div>
-  <div class="leg-hint">💡 Click an item above to show/hide it. Points only appear from the day Rush Order tracking began for that SKU — there's no way to backfill earlier days.</div>
+  <div class="leg-hint">💡 Click an item above to show/hide it. Points only appear from the day Rush Order tracking began for that SKU — there's no way to backfill earlier days. Click a shipment pill on the chart to see its per-item breakdown.</div>
+  <div id="itemShipmentBreakdown" style="display:none;margin:-4px 0 14px;">
+    <div class="cp-lbl" style="margin-bottom:6px;">Shipment breakdown — <span id="shipmentBreakdownDate"></span></div>
+    <table class="ep-tbl2" id="shipmentBreakdownTable" style="width:100%;"></table>
+  </div>
   <div class="leg" style="margin-top:-8px;">
     <span class="li li-toggle" id="btnItemHistory" style="margin-left:auto;color:#D6336C;font-weight:600;">📋 Live history ▾</span>
   </div>
@@ -388,9 +392,9 @@ const ITEM_META={
   tipsS:  {name:'Tips — Small',     shortName:'Tips S',    color:'#378ADD'},
   tipsM:  {name:'Tips — Medium',    shortName:'Tips M',    color:'#16A085'},
   tipsL:  {name:'Tips — Large',     shortName:'Tips L',    color:'#9B59B6'},
-  wingsS: {name:'Sleeves — Small',  shortName:'Sleeves S', color:'#E67E22'},
-  wingsM: {name:'Sleeves — Medium', shortName:'Sleeves M', color:'#C0392B'},
-  wingsL: {name:'Sleeves — Large',  shortName:'Sleeves L', color:'#34495E'},
+  wingsS: {name:'Sleeves (TPU) — Small',  shortName:'Sleeves (TPU) S', color:'#E67E22'},
+  wingsM: {name:'Sleeves (TPU) — Medium', shortName:'Sleeves (TPU) M', color:'#C0392B'},
+  wingsL: {name:'Sleeves (TPU) — Large',  shortName:'Sleeves (TPU) L', color:'#34495E'},
 };
 
 // Manually-logged Tips & Sleeves shipments — purely a visual marker on the
@@ -669,6 +673,26 @@ function renderItemLegend(){
     }));
 }
 
+// Clicking a shipment pill on the Tips & Sleeves chart shows/hides its
+// per-SKU breakdown here. Tracks which day's breakdown is open so a
+// second click on the same pill closes it again.
+let shipmentBreakdownOpenDay=null;
+function toggleShipmentBreakdown(breakdown,day){
+  const panel=document.getElementById('itemShipmentBreakdown');
+  if(shipmentBreakdownOpenDay===day){
+    shipmentBreakdownOpenDay=null;
+    panel.style.display='none';
+    return;
+  }
+  shipmentBreakdownOpenDay=day;
+  document.getElementById('shipmentBreakdownDate').textContent=fmtDate(dayToDate(day));
+  const rows=breakdown.map(b=>
+    `<tr><td>${ITEM_META[b.key].name}</td><td style="text-align:right;">+${b.units.toLocaleString()}</td></tr>`
+  ).join('');
+  document.getElementById('shipmentBreakdownTable').innerHTML=`<tr><th>Item</th><th style="text-align:right;">Qty</th></tr>${rows}`;
+  panel.style.display='block';
+}
+
 // Stats cards reflect the Total Units scenario specifically (the more
 // complete, all-channels view) — noted in the row so it's not read as
 // scenario-agnostic now that there are two projection lines.
@@ -716,14 +740,14 @@ const markersPlugin={id:'markers',afterDraw(ch,_,opts){
   // or several SKUs from one shipment, landing on the same date) so their
   // pills don't render on top of each other.
   const restockDayCount={};
-  (opts.restocks||[]).forEach(({day,units,product,color:itemColor,label})=>{
+  (opts.restocks||[]).forEach(({day,units,product,color:itemColor,label,breakdown})=>{
     const d=day-off;
     if(d<0||d>maxIdx) return;
     const stackIdx=restockDayCount[d]||0;
     restockDayCount[d]=stackIdx+1;
     const color=itemColor||PRODUCT_COLOR[product]||'#1D9E75';
     const text=(label?label+' ':'')+'+'+units.toLocaleString();
-    items.push({px:x.getPixelForValue(d),text,bg:color,fg:'#fff',lineColor:color,dashed:true,lineTo:bottom,bold:false,row:1+stackIdx});
+    items.push({px:x.getPixelForValue(d),text,bg:color,fg:'#fff',lineColor:color,dashed:true,lineTo:bottom,bold:false,row:1+stackIdx,breakdown,day});
   });
 
   const tDay=TODAY_DAY-off;
@@ -731,6 +755,7 @@ const markersPlugin={id:'markers',afterDraw(ch,_,opts){
     items.push({px:x.getPixelForValue(tDay),text:'Today',bg:'rgba(95,94,90,0.9)',fg:'#fff',lineColor:'rgba(95,94,90,0.7)',dashed:true,lineTo:bottom,bold:false,row:0});
   }
 
+  ch.$restockHitboxes=[];
   if(items.length){
     ctx.save();
     ctx.font='600 11px system-ui,sans-serif';
@@ -756,6 +781,11 @@ const markersPlugin={id:'markers',afterDraw(ch,_,opts){
       ctx.fillStyle=it.bg;rrect(ctx,it.px-it.pw/2,py0,it.pw,it.ph,4);ctx.fill();
       ctx.fillStyle=it.fg;ctx.textAlign='center';ctx.textBaseline='middle';
       ctx.fillText(it.text,it.px,py0+it.ph/2);
+      // Clickable region for markers carrying a per-item breakdown (e.g.
+      // Tips & Sleeves shipment pills) — hit-tested in the chart's onClick.
+      if(it.breakdown){
+        ch.$restockHitboxes.push({x0:it.px-it.pw/2,x1:it.px+it.pw/2,y0:py0,y1:py0+it.ph,breakdown:it.breakdown,day:it.day+off});
+      }
     });
     ctx.restore();
   }
@@ -928,10 +958,12 @@ function buildItemChart(){
   const itemRestockByDay={};
   ITEM_RESTOCKS.forEach(r=>{
     const day=daysBetween(START,parseDate(r.date));
-    itemRestockByDay[day]=(itemRestockByDay[day]||0)+r.units;
+    if(!itemRestockByDay[day]) itemRestockByDay[day]={units:0,breakdown:[]};
+    itemRestockByDay[day].units+=r.units;
+    itemRestockByDay[day].breakdown.push({key:r.key,units:r.units});
   });
-  const itemRestockMarkers=Object.entries(itemRestockByDay).map(([day,units])=>({
-    day:+day,units,color:'#1D9E75',
+  const itemRestockMarkers=Object.entries(itemRestockByDay).map(([day,info])=>({
+    day:+day,units:info.units,color:'#1D9E75',breakdown:info.breakdown,
   }));
   const labels=[];
   for(let i=wS;i<=wE;i++) labels.push(fmtDate(dayToDate(i)));
@@ -966,6 +998,11 @@ function buildItemChart(){
       // inside the chart area and overlapping the data lines.
       layout:{padding:{top:80,right:8,bottom:70}},
       interaction:{mode:'index',intersect:false},
+      onClick:(evt,_els,chartInst)=>{
+        const hit=(chartInst.$restockHitboxes||[]).find(hb=>
+          evt.x>=hb.x0&&evt.x<=hb.x1&&evt.y>=hb.y0&&evt.y<=hb.y1);
+        if(hit) toggleShipmentBreakdown(hit.breakdown,hit.day);
+      },
       plugins:{
         legend:{display:false},
         tooltip:{
