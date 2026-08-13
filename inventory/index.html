@@ -393,6 +393,18 @@ const ITEM_META={
   wingsL: {name:'Sleeves — Large',  shortName:'Sleeves L', color:'#34495E'},
 };
 
+// Manually-logged Tips & Sleeves shipments — purely a visual marker on the
+// chart (unlike Smartbuds/MP3/MP4 restocks, these don't feed any
+// projection model; the live-pulled Rush Order balance already reflects
+// receipt of a shipment automatically once it's logged there).
+const ITEM_RESTOCKS=[
+  {date:'2026-08-13', key:'tipsS',  units:2316},
+  {date:'2026-08-13', key:'tipsM',  units:1583},
+  {date:'2026-08-13', key:'tipsL',  units:1239},
+  {date:'2026-08-13', key:'wingsM', units:1163},
+  {date:'2026-08-13', key:'wingsL', units:484},
+];
+
 const START=new Date(2026,4,5); // May 5
 const END_DAY=240;
 
@@ -700,17 +712,18 @@ const markersPlugin={id:'markers',afterDraw(ch,_,opts){
   const maxIdx=ch.data.labels.length-1;
   const items=[];
 
-  // Stack same-day restocks into separate rows (e.g. an MP3 + MP4 restock
-  // landing on the same date) so their pills don't render on top of each
-  // other now that they're no longer merged into one combined number.
+  // Stack same-day restocks into separate rows (e.g. an MP3 + MP4 restock,
+  // or several SKUs from one shipment, landing on the same date) so their
+  // pills don't render on top of each other.
   const restockDayCount={};
-  (opts.restocks||[]).forEach(({day,units,product})=>{
+  (opts.restocks||[]).forEach(({day,units,product,color:itemColor,label})=>{
     const d=day-off;
     if(d<0||d>maxIdx) return;
     const stackIdx=restockDayCount[d]||0;
     restockDayCount[d]=stackIdx+1;
-    const color=PRODUCT_COLOR[product]||'#1D9E75';
-    items.push({px:x.getPixelForValue(d),text:'+'+units.toLocaleString(),bg:color,fg:'#fff',lineColor:color,dashed:true,lineTo:bottom,bold:false,row:1+stackIdx});
+    const color=itemColor||PRODUCT_COLOR[product]||'#1D9E75';
+    const text=(label?label+' ':'')+'+'+units.toLocaleString();
+    items.push({px:x.getPixelForValue(d),text,bg:color,fg:'#fff',lineColor:color,dashed:true,lineTo:bottom,bold:false,row:1+stackIdx});
   });
 
   const tDay=TODAY_DAY-off;
@@ -908,6 +921,12 @@ function buildChart(calc){
 
 function buildItemChart(){
   const wS=MONTHS[itemViewStart].start,wE=MONTHS[itemViewEnd].end;
+  const itemRestockMarkers=ITEM_RESTOCKS.map(r=>({
+    day:daysBetween(START,parseDate(r.date)),
+    units:r.units,
+    color:ITEM_META[r.key].color,
+    label:ITEM_META[r.key].shortName,
+  }));
   const labels=[];
   for(let i=wS;i<=wE;i++) labels.push(fmtDate(dayToDate(i)));
 
@@ -936,10 +955,11 @@ function buildItemChart(){
     data:{labels,datasets},
     options:{
       responsive:true,maintainAspectRatio:false,animation:{duration:150},
-      // Top padding reserves room for the "Today" pill above the plot
-      // (via markersPlugin below) instead of it drawing inside the chart
-      // area and overlapping the data lines.
-      layout:{padding:{top:45,right:8,bottom:70}},
+      // Top padding reserves room for the "Today" pill and stacked shipment
+      // pills above the plot (via markersPlugin below) instead of them
+      // drawing inside the chart area and overlapping the data lines.
+      // Sized for up to ~5 same-day shipment markers stacked above Today.
+      layout:{padding:{top:160,right:8,bottom:70}},
       interaction:{mode:'index',intersect:false},
       plugins:{
         legend:{display:false},
@@ -960,11 +980,13 @@ function buildItemChart(){
           }
         },
         // Reuses the same marker system as the Smartbuds chart (restock
-        // pills + "Today"), but with no restocks and live-pull dots turned
-        // off — those are Smartbuds-specific (LIVE_HISTORY) and were
-        // otherwise plotting Smartbuds balance values against this chart's
-        // own (unrelated) y-scale, landing right on top of the item lines.
-        markers:{restocks:[],offset:wS,showLive:false},
+        // pills + "Today"). Shipment pills are colored/labeled per SKU
+        // (ITEM_RESTOCKS) rather than by MP3/MP4 product. Live-pull dots
+        // are turned off — those are Smartbuds-specific (LIVE_HISTORY) and
+        // were otherwise plotting Smartbuds balance values against this
+        // chart's own (unrelated) y-scale, landing right on top of the
+        // item lines.
+        markers:{restocks:itemRestockMarkers,offset:wS,showLive:false},
       },
       scales:{
         x:{display:false},
