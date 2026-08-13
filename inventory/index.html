@@ -398,11 +398,11 @@ const ITEM_META={
 // projection model; the live-pulled Rush Order balance already reflects
 // receipt of a shipment automatically once it's logged there).
 const ITEM_RESTOCKS=[
-  {date:'2026-08-13', key:'tipsS',  units:2316},
-  {date:'2026-08-13', key:'tipsM',  units:1583},
-  {date:'2026-08-13', key:'tipsL',  units:1239},
-  {date:'2026-08-13', key:'wingsM', units:1163},
-  {date:'2026-08-13', key:'wingsL', units:484},
+  {date:'2026-08-14', key:'tipsS',  units:2316},
+  {date:'2026-08-14', key:'tipsM',  units:1583},
+  {date:'2026-08-14', key:'tipsL',  units:1239},
+  {date:'2026-08-14', key:'wingsM', units:1163},
+  {date:'2026-08-14', key:'wingsL', units:484},
 ];
 
 const START=new Date(2026,4,5); // May 5
@@ -921,11 +921,17 @@ function buildChart(calc){
 
 function buildItemChart(){
   const wS=MONTHS[itemViewStart].start,wE=MONTHS[itemViewEnd].end;
-  const itemRestockMarkers=ITEM_RESTOCKS.map(r=>({
-    day:daysBetween(START,parseDate(r.date)),
-    units:r.units,
-    color:ITEM_META[r.key].color,
-    label:ITEM_META[r.key].shortName,
+  // Combine same-day shipments into one pill (sum of all SKUs) rather than
+  // stacking one row per SKU — matches how the Smartbuds chart shows a
+  // restock as a single pill, and avoids needing a tall reserved margin
+  // that squeezes the actual plot area.
+  const itemRestockByDay={};
+  ITEM_RESTOCKS.forEach(r=>{
+    const day=daysBetween(START,parseDate(r.date));
+    itemRestockByDay[day]=(itemRestockByDay[day]||0)+r.units;
+  });
+  const itemRestockMarkers=Object.entries(itemRestockByDay).map(([day,units])=>({
+    day:+day,units,color:'#1D9E75',
   }));
   const labels=[];
   for(let i=wS;i<=wE;i++) labels.push(fmtDate(dayToDate(i)));
@@ -955,11 +961,10 @@ function buildItemChart(){
     data:{labels,datasets},
     options:{
       responsive:true,maintainAspectRatio:false,animation:{duration:150},
-      // Top padding reserves room for the "Today" pill and stacked shipment
-      // pills above the plot (via markersPlugin below) instead of them
-      // drawing inside the chart area and overlapping the data lines.
-      // Sized for up to ~5 same-day shipment markers stacked above Today.
-      layout:{padding:{top:160,right:8,bottom:70}},
+      // Top padding reserves room for the "Today" pill and shipment pill(s)
+      // above the plot (via markersPlugin below) instead of them drawing
+      // inside the chart area and overlapping the data lines.
+      layout:{padding:{top:80,right:8,bottom:70}},
       interaction:{mode:'index',intersect:false},
       plugins:{
         legend:{display:false},
@@ -980,8 +985,9 @@ function buildItemChart(){
           }
         },
         // Reuses the same marker system as the Smartbuds chart (restock
-        // pills + "Today"). Shipment pills are colored/labeled per SKU
-        // (ITEM_RESTOCKS) rather than by MP3/MP4 product. Live-pull dots
+        // pills + "Today") — a shipment pill shows the combined total
+        // across all SKUs landing that day, same convention as an MP3/MP4
+        // restock pill (quantity only, no per-item label). Live-pull dots
         // are turned off — those are Smartbuds-specific (LIVE_HISTORY) and
         // were otherwise plotting Smartbuds balance values against this
         // chart's own (unrelated) y-scale, landing right on top of the
