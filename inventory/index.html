@@ -216,11 +216,7 @@ input[type=number]{width:70px;text-align:right;}
   </div>
 
   <div class="leg" id="itemLegend"></div>
-  <div class="leg-hint">💡 Click an item above to show/hide it. Points only appear from the day Rush Order tracking began for that SKU.</div>
-  <div id="itemShipmentBreakdown" style="display:none;margin:-4px 0 14px;">
-    <div class="cp-lbl" style="margin-bottom:6px;">Shipment breakdown — <span id="shipmentBreakdownDate"></span></div>
-    <table class="ep-tbl2" id="shipmentBreakdownTable" style="width:100%;"></table>
-  </div>
+  <div class="leg-hint">💡 Click an item above to show/hide it. Points only appear from the day Rush Order tracking began for that SKU. Hover a shipment pill's date for its per-item breakdown.</div>
   <div class="leg" style="margin-top:-8px;">
     <span class="li li-toggle" id="btnItemHistory" style="margin-left:auto;color:#D6336C;font-weight:600;">📋 Live history ▾</span>
   </div>
@@ -688,26 +684,6 @@ function renderItemLegend(){
     }));
 }
 
-// Clicking a shipment pill on the Tips & Sleeves chart shows/hides its
-// per-SKU breakdown here. Tracks which day's breakdown is open so a
-// second click on the same pill closes it again.
-let shipmentBreakdownOpenDay=null;
-function toggleShipmentBreakdown(breakdown,day){
-  const panel=document.getElementById('itemShipmentBreakdown');
-  if(shipmentBreakdownOpenDay===day){
-    shipmentBreakdownOpenDay=null;
-    panel.style.display='none';
-    return;
-  }
-  shipmentBreakdownOpenDay=day;
-  document.getElementById('shipmentBreakdownDate').textContent=fmtDate(dayToDate(day));
-  const rows=breakdown.map(b=>
-    `<tr><td>${ITEM_META[b.key].name}</td><td style="text-align:right;">+${b.units.toLocaleString()}</td></tr>`
-  ).join('');
-  document.getElementById('shipmentBreakdownTable').innerHTML=`<tr><th>Item</th><th style="text-align:right;">Qty</th></tr>${rows}`;
-  panel.style.display='block';
-}
-
 // Stats cards reflect the Direct Units scenario specifically — noted in
 // the row so it's not read as scenario-agnostic now that there are two
 // projection lines. Will switch to Total Units once PPR is finalized.
@@ -751,35 +727,38 @@ const markersPlugin={id:'markers',afterDraw(ch,_,opts){
   const maxIdx=ch.data.labels.length-1;
   const items=[];
 
-  // Stack same-day restocks into separate rows (e.g. an MP3 + MP4 restock,
-  // or several SKUs from one shipment, landing on the same date) so their
-  // pills don't render on top of each other.
-  const restockDayCount={};
-  (opts.restocks||[]).forEach(({day,units,product,color:itemColor,label,breakdown})=>{
+  (opts.restocks||[]).forEach(({day,units,product,color:itemColor,label})=>{
     const d=day-off;
     if(d<0||d>maxIdx) return;
-    const stackIdx=restockDayCount[d]||0;
-    restockDayCount[d]=stackIdx+1;
     const color=itemColor||PRODUCT_COLOR[product]||'#1D9E75';
     const text=(label?label+' ':'')+'+'+units.toLocaleString();
-    items.push({px:x.getPixelForValue(d),text,bg:color,fg:'#fff',lineColor:color,dashed:true,lineTo:bottom,bold:false,row:1+stackIdx,breakdown,day});
+    items.push({px:x.getPixelForValue(d),text,bg:color,fg:'#fff',lineColor:color,dashed:true,lineTo:bottom});
   });
 
   const tDay=TODAY_DAY-off;
   if(tDay>=0&&tDay<=maxIdx){
-    items.push({px:x.getPixelForValue(tDay),text:'Today',bg:'rgba(95,94,90,0.9)',fg:'#fff',lineColor:'rgba(95,94,90,0.7)',dashed:true,lineTo:bottom,bold:false,row:0});
+    items.push({px:x.getPixelForValue(tDay),text:'Today',bg:'rgba(95,94,90,0.9)',fg:'#fff',lineColor:'rgba(95,94,90,0.7)',dashed:true,lineTo:bottom});
   }
 
-  ch.$restockHitboxes=[];
   if(items.length){
     ctx.save();
     ctx.font='600 11px system-ui,sans-serif';
     items.forEach(it=>{it.tw=ctx.measureText(it.text).width;it.pw=it.tw+12;it.ph=18;});
-    // Fixed rows rather than collision-based lanes: all restocks share one
-    // row (closer to the top margin edge), Today always sits in its own row
-    // just below them (closer to the plot) so the two groups never compete
-    // for space or shuffle around as dates change.
-    items.forEach(it=>{it.lane=it.row;});
+    // Real collision-based lane assignment (by pixel position, not just
+    // same calendar day) — pills that are merely close together in time
+    // (e.g. two restocks a couple days apart) stagger into separate rows
+    // instead of visually overlapping. Today competes for lanes the same
+    // as everything else now, so it sits at the same baseline height as
+    // restocks unless something nearby bumps it up.
+    const sorted=[...items].sort((a,b)=>a.px-b.px);
+    const laneRightEdge=[];
+    sorted.forEach(it=>{
+      let lane=0;
+      const left=it.px-it.pw/2;
+      while(laneRightEdge[lane]!==undefined&&left<laneRightEdge[lane]+6) lane++;
+      laneRightEdge[lane]=it.px+it.pw/2;
+      it.lane=lane;
+    });
     items.forEach(it=>{
       // Lanes stack UPWARD from just above the plot area into the reserved
       // top margin (see layout.padding.top below), so labels never sit on
@@ -796,42 +775,37 @@ const markersPlugin={id:'markers',afterDraw(ch,_,opts){
       ctx.fillStyle=it.bg;rrect(ctx,it.px-it.pw/2,py0,it.pw,it.ph,4);ctx.fill();
       ctx.fillStyle=it.fg;ctx.textAlign='center';ctx.textBaseline='middle';
       ctx.fillText(it.text,it.px,py0+it.ph/2);
-      // Clickable region for markers carrying a per-item breakdown (e.g.
-      // Tips & Sleeves shipment pills) — hit-tested in the chart's onClick.
-      if(it.breakdown){
-        const pad=4; // a little slack so a near-miss click still registers
-        ch.$restockHitboxes.push({x0:it.px-it.pw/2-pad,x1:it.px+it.pw/2+pad,y0:py0-pad,y1:py0+it.ph+pad,breakdown:it.breakdown,day:it.day+off});
-      }
     });
     ctx.restore();
   }
 
-  // Live pulls: small dot(s) + a compact side label on the last point only.
-  // Deliberately NOT part of the top-pill/flagpole system above — it sits
-  // right on the data point so it never covers restock/projection info.
-  const livePts=opts.showLive===false?[]:LIVE_HISTORY.map(h=>({...h,day:h.day-off})).filter(h=>h.day>=0&&h.day<=maxIdx);
-  if(livePts.length){
-    livePts.forEach((p,i)=>{
-      const px=x.getPixelForValue(p.day),py=y.getPixelForValue(p.balance);
+  // Live pulls: only the MOST RECENT pull gets a dot+label. With a month+
+  // of accumulated daily history, marking every single day's real pull
+  // just duplicates what the line itself already traces out and clutters
+  // the plot — the one dot that actually adds information is "here's the
+  // latest real number," same as before.
+  if(opts.showLive!==false&&LIVE_HISTORY.length){
+    const last=LIVE_HISTORY[LIVE_HISTORY.length-1];
+    const day=last.day-off;
+    if(day>=0&&day<=maxIdx){
+      const px=x.getPixelForValue(day),py=y.getPixelForValue(last.balance);
       ctx.save();
       ctx.beginPath();ctx.arc(px,py,7,0,Math.PI*2);ctx.fillStyle='#fff';ctx.fill();
       ctx.fillStyle=LIVE_COLOR;ctx.strokeStyle='#fff';ctx.lineWidth=2;
       ctx.beginPath();ctx.arc(px,py,5.5,0,Math.PI*2);ctx.fill();ctx.stroke();
       ctx.restore();
-      if(i===livePts.length-1){
-        const lbl='Live '+(p.balance>0?'+':'')+p.balance.toLocaleString();
-        ctx.save();
-        ctx.font='600 10px system-ui,sans-serif';
-        const tw=ctx.measureText(lbl).width,pw=tw+10,ph=16;
-        const toRight=(right-px)>pw+14;
-        const lx=toRight?px+10:px-10-pw, ly=py-ph/2;
-        ctx.fillStyle='#fff';ctx.strokeStyle=LIVE_COLOR;ctx.lineWidth=1.25;
-        rrect(ctx,lx,ly,pw,ph,4);ctx.fill();ctx.stroke();
-        ctx.fillStyle=LIVE_COLOR;ctx.textAlign=toRight?'left':'right';ctx.textBaseline='middle';
-        ctx.fillText(lbl,toRight?lx+5:lx+pw-5,ly+ph/2);
-        ctx.restore();
-      }
-    });
+      const lbl='Live '+(last.balance>0?'+':'')+last.balance.toLocaleString();
+      ctx.save();
+      ctx.font='600 10px system-ui,sans-serif';
+      const tw=ctx.measureText(lbl).width,pw=tw+10,ph=16;
+      const toRight=(right-px)>pw+14;
+      const lx=toRight?px+10:px-10-pw, ly=py-ph/2;
+      ctx.fillStyle='#fff';ctx.strokeStyle=LIVE_COLOR;ctx.lineWidth=1.25;
+      rrect(ctx,lx,ly,pw,ph,4);ctx.fill();ctx.stroke();
+      ctx.fillStyle=LIVE_COLOR;ctx.textAlign=toRight?'left':'right';ctx.textBaseline='middle';
+      ctx.fillText(lbl,toRight?lx+5:lx+pw-5,ly+ph/2);
+      ctx.restore();
+    }
   }
 }};
 
@@ -979,7 +953,7 @@ function buildItemChart(){
     itemRestockByDay[day].breakdown.push({key:r.key,units:r.units});
   });
   const itemRestockMarkers=Object.entries(itemRestockByDay).map(([day,info])=>({
-    day:+day,units:info.units,color:'#1D9E75',breakdown:info.breakdown,
+    day:+day,units:info.units,color:'#1D9E75',
   }));
   const labels=[];
   for(let i=wS;i<=wE;i++) labels.push(fmtDate(dayToDate(i)));
@@ -1014,15 +988,6 @@ function buildItemChart(){
       // inside the chart area and overlapping the data lines.
       layout:{padding:{top:80,right:8,bottom:70}},
       interaction:{mode:'index',intersect:false},
-      onClick:(evt,_els,chartInst)=>{
-        // Use Chart.js's documented helper rather than evt.x/evt.y directly —
-        // those aren't guaranteed to be in the same canvas-pixel space our
-        // hitboxes were recorded in (devicePixelRatio/CSS-size mismatches).
-        const pos=Chart.helpers.getRelativePosition(evt,chartInst);
-        const hit=(chartInst.$restockHitboxes||[]).find(hb=>
-          pos.x>=hb.x0&&pos.x<=hb.x1&&pos.y>=hb.y0&&pos.y<=hb.y1);
-        if(hit) toggleShipmentBreakdown(hit.breakdown,hit.day);
-      },
       plugins:{
         legend:{display:false},
         tooltip:{
@@ -1038,7 +1003,21 @@ function buildItemChart(){
               const qty=v<0?Math.abs(v).toLocaleString()+' backordered':v.toLocaleString()+' in stock';
               return `${item.dataset.label}: ${qty}`;
             },
-            filter:item=>item.raw!==null&&item.raw!==undefined
+            filter:item=>item.raw!==null&&item.raw!==undefined,
+            // Hovering anywhere near a shipment's date appends its per-SKU
+            // breakdown to the tooltip — this rides Chart.js's own
+            // hover/tooltip system (already "index" mode) instead of a
+            // hand-rolled click hit-test, so it's reliable on any pointer
+            // event (mouse, touch) without needing pixel-perfect precision.
+            afterBody:items=>{
+              if(!items.length) return [];
+              const day=items[0].dataIndex+wS;
+              const info=itemRestockByDay[day];
+              if(!info) return [];
+              const lines=['','📦 Shipment breakdown:'];
+              info.breakdown.forEach(b=>lines.push(`  ${ITEM_META[b.key].name}: +${b.units.toLocaleString()}`));
+              return lines;
+            }
           }
         },
         // Reuses the same marker system as the Smartbuds chart (restock
