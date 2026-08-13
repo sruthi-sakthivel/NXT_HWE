@@ -142,7 +142,7 @@ input[type=number]{width:70px;text-align:right;}
     <select id="selStart"></select>
     <span class="wl">to</span>
     <select id="selEnd"></select>
-    <button class="pbtn" id="btnFullYear">Full year</button>
+    <button class="pbtn" id="btnFullYear">Full range</button>
   </div>
 
   <div class="stats" id="statRow"></div>
@@ -464,7 +464,7 @@ function hexToRgba(hex,alpha){
   return `rgba(${r},${g},${b},${alpha})`;
 }
 
-let viewStart=0, viewEnd=7;
+let viewStart=0, viewEnd=8; // May through Jan by default; "Full range" extends through Feb
 let showTotal=true, showDirect=true;
 let restocks=[
   {date:'2026-05-27', units:240, product:'MP3'},
@@ -505,11 +505,11 @@ function buildSelects(){
   const se=document.getElementById('selEnd');
   ss.innerHTML=MONTHS.slice(0,-1).map((m,i)=>`<option value="${i}"${i===viewStart?' selected':''}>${m.name}</option>`).join('');
   se.innerHTML=MONTHS.slice(1).map((m,i)=>`<option value="${i+1}"${(i+1)===viewEnd?' selected':''}>${m.name}</option>`).join('');
-  document.getElementById('btnFullYear').classList.toggle('active',viewStart===0&&viewEnd===7);
+  document.getElementById('btnFullYear').classList.toggle('active',viewStart===0&&viewEnd===MONTHS.length-1);
 }
 
 document.getElementById('btnFullYear').addEventListener('click',()=>{
-  viewStart=0;viewEnd=7;buildSelects();update();
+  viewStart=0;viewEnd=MONTHS.length-1;buildSelects();update();
 });
 
 // Independent view window for the Tips & Sleeves chart — defaults to
@@ -799,7 +799,8 @@ const markersPlugin={id:'markers',afterDraw(ch,_,opts){
       // Clickable region for markers carrying a per-item breakdown (e.g.
       // Tips & Sleeves shipment pills) — hit-tested in the chart's onClick.
       if(it.breakdown){
-        ch.$restockHitboxes.push({x0:it.px-it.pw/2,x1:it.px+it.pw/2,y0:py0,y1:py0+it.ph,breakdown:it.breakdown,day:it.day+off});
+        const pad=4; // a little slack so a near-miss click still registers
+        ch.$restockHitboxes.push({x0:it.px-it.pw/2-pad,x1:it.px+it.pw/2+pad,y0:py0-pad,y1:py0+it.ph+pad,breakdown:it.breakdown,day:it.day+off});
       }
     });
     ctx.restore();
@@ -1014,8 +1015,12 @@ function buildItemChart(){
       layout:{padding:{top:80,right:8,bottom:70}},
       interaction:{mode:'index',intersect:false},
       onClick:(evt,_els,chartInst)=>{
+        // Use Chart.js's documented helper rather than evt.x/evt.y directly —
+        // those aren't guaranteed to be in the same canvas-pixel space our
+        // hitboxes were recorded in (devicePixelRatio/CSS-size mismatches).
+        const pos=Chart.helpers.getRelativePosition(evt,chartInst);
         const hit=(chartInst.$restockHitboxes||[]).find(hb=>
-          evt.x>=hb.x0&&evt.x<=hb.x1&&evt.y>=hb.y0&&evt.y<=hb.y1);
+          pos.x>=hb.x0&&pos.x<=hb.x1&&pos.y>=hb.y0&&pos.y<=hb.y1);
         if(hit) toggleShipmentBreakdown(hit.breakdown,hit.day);
       },
       plugins:{
