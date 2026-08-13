@@ -721,7 +721,7 @@ const crosshairPlugin={id:'xhair',afterDraw(ch){
 const markersPlugin={id:'markers',afterDraw(ch,_,opts){
   if(!ch.scales?.x) return;
   const off=opts.offset||0;
-  const{ctx,chartArea:{top,bottom}}=ch;
+  const{ctx,chartArea:{top,bottom},scales:{x}}=ch;
   const maxIdx=ch.data.labels.length-1;
   const items=[];
 
