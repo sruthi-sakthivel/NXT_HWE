@@ -177,10 +177,10 @@ input[type=number]{width:70px;text-align:right;}
     <span class="li"><span style="width:20px;height:2px;background:#378ADD;display:inline-block;border-radius:2px;"></span>In stock
       <span style="width:20px;height:2px;background:#c0392b;display:inline-block;border-radius:2px;margin-left:6px;"></span>Backordered</span>
     <span class="li li-toggle" id="legToggleTotal" title="Click to show/hide the Total Units sales projection">
-      <span style="width:20px;height:0;border-top:2px solid #5F5E5A;display:inline-block;"></span>Total Units
+      <span style="width:20px;height:0;border-top:2px dotted #5F5E5A;display:inline-block;"></span>Total Units
     </span>
     <span class="li li-toggle" id="legToggleDirect" title="Click to show/hide the Direct Units sales projection">
-      <span style="width:20px;height:0;border-top:2px dashed #5F5E5A;display:inline-block;"></span>Direct Units
+      <span style="width:20px;height:0;border-top:2px solid #5F5E5A;display:inline-block;"></span>Direct Units
     </span>
     <span class="li"><span style="width:1.5px;height:12px;background:#1D9E75;display:inline-block;"></span>MP3 Restock</span>
     <span class="li"><span style="width:1.5px;height:12px;background:#D97706;display:inline-block;"></span>MP4 Restock</span>
@@ -838,10 +838,10 @@ function buildChart(calc){
 
   // Color = status (blue in stock / red backordered), applied per-segment so
   // each line's own crossings are colored independently. Line style
-  // distinguishes the two scenarios: solid = Total Units, dashed = Direct
+  // distinguishes the two scenarios: solid = Direct Units, dotted = Total
   // Units — since color is now spoken for by status, not scenario.
   const mkDataset=(key,data,hidden)=>{
-    const dash=key==='direct'?[6,4]:[];
+    const dash=key==='total'?[2,3]:[];
     return{
       label:SCENARIO_STYLE[key].label,data,hidden,
       fill:'origin',tension:0,pointRadius:0,pointHoverRadius:5,
