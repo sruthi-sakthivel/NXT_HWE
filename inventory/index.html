@@ -146,6 +146,7 @@ input[type=number]{width:70px;text-align:right;}
   </div>
 
   <div class="stats" id="statRow"></div>
+  <div class="leg-hint" style="margin-top:-10px;">💡 Backorder periods and "stock lasts through" above are based on the Total Units projection, not Direct Units.</div>
 
   <div class="ctrls">
     <div class="cp">
@@ -1497,6 +1498,7 @@ function renderEmailPreview(){
     <div class="ep-section-title">🔌 Live stock — Rush Order (as of ${LIVE_STOCK.fetchedAt})</div>
     <table class="ep-tbl2"><tr><th>Item</th><th style="text-align:right;">Available</th><th style="text-align:right;">Committed</th><th style="text-align:right;">Backordered</th></tr>${liveRowsHtml}</table>
     <div class="ep-section-title">📅 Projected in/out timeline</div>
+    <div style="font-size:10px;color:#888780;margin:-2px 0 6px;">Based on the Total Units projection, not Direct Units.</div>
     <table class="ep-tbl2"><tr><th>Date</th><th>Flips to</th><th style="text-align:right;">~Balance</th></tr>${timelineRows||'<tr><td colspan=3>No upcoming flips in projection window</td></tr>'}</table>
     <div class="ep-section-title">📦 Inbound deliveries (driving the projection)</div>
     <table class="ep-tbl2"><tr><th>Product</th><th>Date</th><th>Status</th><th>Qty</th><th>Batch</th><th>Source</th></tr>${delivRowsHtml||'<tr><td colspan=6>No deliveries in window</td></tr>'}</table>
@@ -1522,7 +1524,7 @@ function buildEmailPlainText(){
   t+=`🔌 Live stock — Rush Order (as of ${LIVE_STOCK.fetchedAt})\n`;
   t+=`Item\tAvailable\tCommitted\tBackordered\n`;
   LIVE_STOCK.items.forEach(it=>{t+=`${it.name}\t${it.available.toLocaleString()}\t${it.committed.toLocaleString()}\t${it.backorder.toLocaleString()}\n`;});
-  t+=`\n📅 Projected in/out timeline\n`;
+  t+=`\n📅 Projected in/out timeline (based on Total Units projection, not Direct Units)\n`;
   t+=`Date\tFlips to\t~Balance\n`;
   m.timeline.forEach(f=>{t+=`${f.date}\t${f.type==='OUT OF STOCK'?'BACKORDERED':'POSITIVE STOCK'}\t${f.balance.toLocaleString()}\n`;});
   t+=`\n📦 Inbound deliveries (driving the projection)\n`;
