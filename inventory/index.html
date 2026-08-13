@@ -185,7 +185,6 @@ input[type=number]{width:70px;text-align:right;}
     </span>
     <span class="li"><span style="width:1.5px;height:12px;background:#1D9E75;display:inline-block;"></span>MP3 Restock</span>
     <span class="li"><span style="width:1.5px;height:12px;background:#D97706;display:inline-block;"></span>MP4 Restock</span>
-    <span class="li"><span style="width:9px;height:9px;background:#D6336C;border:1.5px solid #fff;box-shadow:0 0 0 1px #D6336C;border-radius:50%;display:inline-block;"></span>Live (Rush Order)</span>
     <span class="li"><span style="width:20px;height:1px;border-top:1.5px dashed #5F5E5A;display:inline-block;"></span>Today</span>
     <span class="li li-toggle" id="btnLiveHistory" style="margin-left:auto;color:#D6336C;font-weight:600;">📋 Live history ▾</span>
   </div>
@@ -214,6 +213,7 @@ input[type=number]{width:70px;text-align:right;}
       <canvas id="meuChart"></canvas>
     </div>
   </div>
+  <div id="shipmentHoverTip" style="display:none;position:fixed;z-index:2000;pointer-events:none;background:rgba(30,30,28,0.95);color:#fff;border:1px solid rgba(136,135,128,0.3);border-radius:6px;padding:8px 12px;font-size:12px;line-height:1.5;box-shadow:0 8px 24px rgba(0,0,0,0.4);"></div>
 
   <div class="leg" id="itemLegend"></div>
   <div class="leg-hint">💡 Click an item above to show/hide it. Points only appear from the day Rush Order tracking began for that SKU. Hover a shipment pill's date for its per-item breakdown.</div>
@@ -466,7 +466,7 @@ let restocks=[
   {date:'2026-05-27', units:240, product:'MP3'},
   {date:'2026-06-12', units:400, product:'MP3'},
   {date:'2026-07-06', units:480, actual:true, product:'MP3'},
-  {date:'2026-07-08', units:240, actual:true, product:'MP3'},
+  {date:'2026-07-09', units:240, actual:true, product:'MP3'},
   {date:'2026-07-13', units:480, actual:true, product:'MP3'},
   {date:'2026-08-25', units:300, product:'MP3'},
   {date:'2026-09-25', units:1280, product:'MP4'},
@@ -718,21 +718,19 @@ const crosshairPlugin={id:'xhair',afterDraw(ch){
 // Unified marker system for restocks + today on the main chart.
 // Top-anchored pill labels go through shared lane assignment so close
 // dates stack vertically instead of overlapping each other.
-const LIVE_COLOR='#D6336C';
-
 const markersPlugin={id:'markers',afterDraw(ch,_,opts){
   if(!ch.scales?.x) return;
   const off=opts.offset||0;
-  const{ctx,chartArea:{top,bottom,right},scales:{x,y}}=ch;
+  const{ctx,chartArea:{top,bottom}}=ch;
   const maxIdx=ch.data.labels.length-1;
   const items=[];
 
-  (opts.restocks||[]).forEach(({day,units,product,color:itemColor,label})=>{
+  (opts.restocks||[]).forEach(({day,units,product,color:itemColor,label,breakdown})=>{
     const d=day-off;
     if(d<0||d>maxIdx) return;
     const color=itemColor||PRODUCT_COLOR[product]||'#1D9E75';
     const text=(label?label+' ':'')+'+'+units.toLocaleString();
-    items.push({px:x.getPixelForValue(d),text,bg:color,fg:'#fff',lineColor:color,dashed:true,lineTo:bottom});
+    items.push({px:x.getPixelForValue(d),text,bg:color,fg:'#fff',lineColor:color,dashed:true,lineTo:bottom,breakdown,day});
   });
 
   const tDay=TODAY_DAY-off;
@@ -770,43 +768,29 @@ const markersPlugin={id:'markers',afterDraw(ch,_,opts){
       ctx.beginPath();ctx.moveTo(it.px,lineStartY);ctx.lineTo(it.px,it.lineTo);ctx.stroke();
       ctx.setLineDash([]);
     });
+    ch.$pillRects=[];
     items.forEach(it=>{
       const py0=top-8-(it.lane+1)*22;
       ctx.fillStyle=it.bg;rrect(ctx,it.px-it.pw/2,py0,it.pw,it.ph,4);ctx.fill();
       ctx.fillStyle=it.fg;ctx.textAlign='center';ctx.textBaseline='middle';
       ctx.fillText(it.text,it.px,py0+it.ph/2);
+      // Recorded for charts that want hover-driven detail on a pill (e.g.
+      // Tips & Sleeves shipment breakdown) — consumed via a plain mousemove
+      // listener on the canvas (see buildItemChart), not Chart.js's own
+      // tooltip/interaction system, since that only reliably fires within
+      // the plot area and these pills live up in the reserved top margin.
+      if(it.breakdown){
+        ch.$pillRects.push({x0:it.px-it.pw/2,x1:it.px+it.pw/2,y0:py0,y1:py0+it.ph,breakdown:it.breakdown,day:it.day});
+      }
     });
     ctx.restore();
   }
 
-  // Live pulls: only the MOST RECENT pull gets a dot+label. With a month+
-  // of accumulated daily history, marking every single day's real pull
-  // just duplicates what the line itself already traces out and clutters
-  // the plot — the one dot that actually adds information is "here's the
-  // latest real number," same as before.
-  if(opts.showLive!==false&&LIVE_HISTORY.length){
-    const last=LIVE_HISTORY[LIVE_HISTORY.length-1];
-    const day=last.day-off;
-    if(day>=0&&day<=maxIdx){
-      const px=x.getPixelForValue(day),py=y.getPixelForValue(last.balance);
-      ctx.save();
-      ctx.beginPath();ctx.arc(px,py,7,0,Math.PI*2);ctx.fillStyle='#fff';ctx.fill();
-      ctx.fillStyle=LIVE_COLOR;ctx.strokeStyle='#fff';ctx.lineWidth=2;
-      ctx.beginPath();ctx.arc(px,py,5.5,0,Math.PI*2);ctx.fill();ctx.stroke();
-      ctx.restore();
-      const lbl='Live '+(last.balance>0?'+':'')+last.balance.toLocaleString();
-      ctx.save();
-      ctx.font='600 10px system-ui,sans-serif';
-      const tw=ctx.measureText(lbl).width,pw=tw+10,ph=16;
-      const toRight=(right-px)>pw+14;
-      const lx=toRight?px+10:px-10-pw, ly=py-ph/2;
-      ctx.fillStyle='#fff';ctx.strokeStyle=LIVE_COLOR;ctx.lineWidth=1.25;
-      rrect(ctx,lx,ly,pw,ph,4);ctx.fill();ctx.stroke();
-      ctx.fillStyle=LIVE_COLOR;ctx.textAlign=toRight?'left':'right';ctx.textBaseline='middle';
-      ctx.fillText(lbl,toRight?lx+5:lx+pw-5,ly+ph/2);
-      ctx.restore();
-    }
-  }
+  // Live pulls used to draw a dot(+label) directly on the line at the
+  // most recent real value — removed entirely: it sat right where the
+  // line and other pills already are and kept getting in the way. The
+  // exact same values are already visible via the line itself and the
+  // "Live history" table below the chart.
 }};
 
 const multiAxisPlugin={id:'maxis',afterDraw(ch,_,opts){
@@ -953,7 +937,7 @@ function buildItemChart(){
     itemRestockByDay[day].breakdown.push({key:r.key,units:r.units});
   });
   const itemRestockMarkers=Object.entries(itemRestockByDay).map(([day,info])=>({
-    day:+day,units:info.units,color:'#1D9E75',
+    day:+day,units:info.units,color:'#1D9E75',breakdown:info.breakdown,
   }));
   const labels=[];
   for(let i=wS;i<=wE;i++) labels.push(fmtDate(dayToDate(i)));
@@ -1003,32 +987,14 @@ function buildItemChart(){
               const qty=v<0?Math.abs(v).toLocaleString()+' backordered':v.toLocaleString()+' in stock';
               return `${item.dataset.label}: ${qty}`;
             },
-            filter:item=>item.raw!==null&&item.raw!==undefined,
-            // Hovering anywhere near a shipment's date appends its per-SKU
-            // breakdown to the tooltip — this rides Chart.js's own
-            // hover/tooltip system (already "index" mode) instead of a
-            // hand-rolled click hit-test, so it's reliable on any pointer
-            // event (mouse, touch) without needing pixel-perfect precision.
-            afterBody:items=>{
-              if(!items.length) return [];
-              const day=items[0].dataIndex+wS;
-              const info=itemRestockByDay[day];
-              if(!info) return [];
-              const lines=['','📦 Shipment breakdown:'];
-              info.breakdown.forEach(b=>lines.push(`  ${ITEM_META[b.key].name}: +${b.units.toLocaleString()}`));
-              return lines;
-            }
+            filter:item=>item.raw!==null&&item.raw!==undefined
           }
         },
         // Reuses the same marker system as the Smartbuds chart (restock
         // pills + "Today") — a shipment pill shows the combined total
         // across all SKUs landing that day, same convention as an MP3/MP4
-        // restock pill (quantity only, no per-item label). Live-pull dots
-        // are turned off — those are Smartbuds-specific (LIVE_HISTORY) and
-        // were otherwise plotting Smartbuds balance values against this
-        // chart's own (unrelated) y-scale, landing right on top of the
-        // item lines.
-        markers:{restocks:itemRestockMarkers,offset:wS,showLive:false},
+        // restock pill (quantity only, no per-item label).
+        markers:{restocks:itemRestockMarkers,offset:wS},
       },
       scales:{
         x:{display:false},
@@ -1046,7 +1012,32 @@ function buildItemChart(){
     }]
   };
   if(meuChart) meuChart.destroy();
-  meuChart=new Chart(document.getElementById('meuChart'),cfg);
+  const canvasEl=document.getElementById('meuChart');
+  meuChart=new Chart(canvasEl,cfg);
+
+  // Shipment breakdown on hover — deliberately NOT using Chart.js's own
+  // tooltip/interaction system (tried that; it doesn't reliably fire for
+  // pills drawn up in the reserved top margin, outside the actual plot
+  // area). This uses plain DOM mouse coordinates via getBoundingClientRect,
+  // which Chart.js's own canvas-pixel space matches exactly (it scales the
+  // canvas so 1 chart-pixel-unit = 1 CSS pixel), so it lines up correctly
+  // with the rects markersPlugin records in ch.$pillRects.
+  const tip=document.getElementById('shipmentHoverTip');
+  canvasEl.onmousemove=(evt)=>{
+    const rect=canvasEl.getBoundingClientRect();
+    const mx=evt.clientX-rect.left, my=evt.clientY-rect.top;
+    const hit=(meuChart.$pillRects||[]).find(r=>mx>=r.x0&&mx<=r.x1&&my>=r.y0&&my<=r.y1);
+    if(hit){
+      const rows=hit.breakdown.map(b=>`<div>${ITEM_META[b.key].name}: +${b.units.toLocaleString()}</div>`).join('');
+      tip.innerHTML=`<div style="font-weight:700;margin-bottom:4px;">${fmtDate(dayToDate(hit.day))} shipment</div>${rows}`;
+      tip.style.display='block';
+      tip.style.left=(evt.clientX+14)+'px';
+      tip.style.top=(evt.clientY+14)+'px';
+    }else{
+      tip.style.display='none';
+    }
+  };
+  canvasEl.onmouseleave=()=>{tip.style.display='none';};
 }
 
 // Keyed by day-index (relative to the shared START epoch), not by date
@@ -1120,7 +1111,7 @@ function buildTxChart(){
             filter:item=>meta[item.dataIndex]!==null
           }
         },
-        markers:{restocks:[],offset:wS,showLive:false},
+        markers:{restocks:[],offset:wS},
       },
       scales:{
         x:{display:false},
