@@ -185,6 +185,7 @@ input[type=number]{width:70px;text-align:right;}
     </span>
     <span class="li"><span style="width:1.5px;height:12px;background:#1D9E75;display:inline-block;"></span>MP3 Restock</span>
     <span class="li"><span style="width:1.5px;height:12px;background:#D97706;display:inline-block;"></span>MP4 Restock</span>
+    <span class="li"><span style="width:1.5px;height:12px;background:#D6336C;display:inline-block;"></span>Live (Rush Order)</span>
     <span class="li"><span style="width:20px;height:1px;border-top:1.5px dashed #5F5E5A;display:inline-block;"></span>Today</span>
     <span class="li li-toggle" id="btnLiveHistory" style="margin-left:auto;color:#D6336C;font-weight:600;">📋 Live history ▾</span>
   </div>
@@ -738,6 +739,22 @@ const markersPlugin={id:'markers',afterDraw(ch,_,opts){
     items.push({px:x.getPixelForValue(tDay),text:'Today',bg:'rgba(95,94,90,0.9)',fg:'#fff',lineColor:'rgba(95,94,90,0.7)',dashed:true,lineTo:bottom});
   }
 
+  // Live (Rush Order) — most recent pull only, as a pill in the same
+  // reserved-margin lane system as Today/restocks (opt-in via
+  // opts.showLive, since only the Smartbuds chart has LIVE_HISTORY data
+  // worth showing). Previously drawn as a dot directly on the line, which
+  // sat right in the data and got in the way regardless of position —
+  // this way it just competes for lane space like everything else, and
+  // naturally lands next to Today instead of overlapping the plot.
+  if(opts.showLive&&LIVE_HISTORY.length){
+    const last=LIVE_HISTORY[LIVE_HISTORY.length-1];
+    const ld=last.day-off;
+    if(ld>=0&&ld<=maxIdx){
+      const lbl='Live '+(last.balance>0?'+':'')+last.balance.toLocaleString();
+      items.push({px:x.getPixelForValue(ld),text:lbl,bg:'#D6336C',fg:'#fff',lineColor:'#D6336C',dashed:true,lineTo:bottom});
+    }
+  }
+
   if(items.length){
     ctx.save();
     ctx.font='600 11px system-ui,sans-serif';
@@ -902,7 +919,7 @@ function buildChart(calc){
             }
           }
         },
-        markers:{restocks:calc.direct.restockMarkers,offset:wS},
+        markers:{restocks:calc.direct.restockMarkers,offset:wS,showLive:true},
       },
       scales:{
         x:{display:false},
