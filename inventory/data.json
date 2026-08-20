@@ -1,6 +1,6 @@
 {
   "liveStock": {
-    "fetchedAt": "Aug 19, 2026",
+    "fetchedAt": "Aug 20, 2026",
     "items": [
       {
         "key": "earbuds",
@@ -8,21 +8,21 @@
         "sku": "NSSB0100-ZW",
         "available": 0,
         "committed": 0,
-        "backorder": 538
+        "backorder": 556
       },
       {
         "key": "tipsS",
         "name": "Tips — Small",
         "sku": "NSEMTA0201C-W",
-        "available": 2654,
-        "committed": 121,
+        "available": 2651,
+        "committed": 124,
         "backorder": 0
       },
       {
         "key": "tipsM",
         "name": "Tips — Medium",
         "sku": "NSEMTB0201C-W",
-        "available": 1230,
+        "available": 1227,
         "committed": 66,
         "backorder": 12
       },
@@ -30,8 +30,8 @@
         "key": "tipsL",
         "name": "Tips — Large",
         "sku": "NSEMTC0201C-W",
-        "available": 1467,
-        "committed": 13,
+        "available": 1461,
+        "committed": 16,
         "backorder": 0
       },
       {
@@ -40,21 +40,21 @@
         "sku": "NSEMWZ0103T-W",
         "available": 0,
         "committed": 0,
-        "backorder": 242
+        "backorder": 245
       },
       {
         "key": "wingsM",
         "name": "Sleeves — Medium",
         "sku": "NSEMWY0303T-W",
-        "available": 936,
-        "committed": 1,
+        "available": 933,
+        "committed": 4,
         "backorder": 12
       },
       {
         "key": "wingsL",
         "name": "Sleeves — Large",
         "sku": "NSEMWX0103T-W",
-        "available": 490,
+        "available": 484,
         "committed": 0,
         "backorder": 0
       }
@@ -260,6 +260,11 @@
       "date": "2026-08-19",
       "day": 106,
       "balance": -538
+    },
+    {
+      "date": "2026-08-20",
+      "day": 107,
+      "balance": -556
     }
   ],
   "itemHistory": {
@@ -408,6 +413,11 @@
         "date": "2026-08-19",
         "day": 106,
         "balance": 2654
+      },
+      {
+        "date": "2026-08-20",
+        "day": 107,
+        "balance": 2651
       }
     ],
     "tipsM": [
@@ -555,6 +565,11 @@
         "date": "2026-08-19",
         "day": 106,
         "balance": 1218
+      },
+      {
+        "date": "2026-08-20",
+        "day": 107,
+        "balance": 1215
       }
     ],
     "tipsL": [
@@ -702,6 +717,11 @@
         "date": "2026-08-19",
         "day": 106,
         "balance": 1467
+      },
+      {
+        "date": "2026-08-20",
+        "day": 107,
+        "balance": 1461
       }
     ],
     "wingsS": [
@@ -849,6 +869,11 @@
         "date": "2026-08-19",
         "day": 106,
         "balance": -242
+      },
+      {
+        "date": "2026-08-20",
+        "day": 107,
+        "balance": -245
       }
     ],
     "wingsM": [
@@ -996,6 +1021,11 @@
         "date": "2026-08-19",
         "day": 106,
         "balance": 924
+      },
+      {
+        "date": "2026-08-20",
+        "day": 107,
+        "balance": 921
       }
     ],
     "wingsL": [
@@ -1143,8 +1173,13 @@
         "date": "2026-08-19",
         "day": 106,
         "balance": 490
+      },
+      {
+        "date": "2026-08-20",
+        "day": 107,
+        "balance": 484
       }
     ]
   },
-  "lastRefreshed": "2026-08-19T16:44:10.055Z"
+  "lastRefreshed": "2026-08-20T16:03:13.405Z"
 }
