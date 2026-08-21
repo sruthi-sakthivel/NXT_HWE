@@ -168,7 +168,7 @@ input[type=number]{width:70px;text-align:right;}
       <div class="re-row re-header">
         <span>Product</span>
         <span style="text-align:left;">Date</span>
-        <span>Qty</span>
+        <span>Quantity</span>
         <span>Variance</span>
         <span></span>
       </div>
@@ -498,8 +498,9 @@ function restockVarianceDays(r){
   if(planned===r.date) return 0;
   return daysBetween(parseDate(planned), parseDate(r.date));
 }
+// Only called for nonzero variance -- on-plan shipments show no badge at
+// all rather than a placeholder "On plan" pill.
 function fmtVariance(days){
-  if(days===0) return {text:'On plan', color:'#378ADD', bg:'rgba(55,138,221,0.12)'};
   return {text:`${days>0?'+':''}${days}d`, color:'#5F5E5A', bg:'rgba(0,0,0,0.06)'};
 }
 const PRODUCT_COLOR={MP3:'#1D9E75',MP4:'#8E44AD'};
@@ -593,7 +594,10 @@ function renderRestockRows(){
     const product=r.product||'MP3';
     const color=PRODUCT_COLOR[product];
     const varDays=restockVarianceDays(r);
-    const v=fmtVariance(varDays);
+    const varianceHtml=varDays!==0?(()=>{
+      const v=fmtVariance(varDays);
+      return `<span class="re-variance" style="color:${v.color};background:${v.bg};" title="Planned: ${r.plannedDate}">${v.text}</span>`;
+    })():'';
     return `<div class="re-row">
       <select class="re-product" data-idx="${i}" style="border:1px solid ${color}55;background:${color}18;color:${color};">
         <option value="MP3" ${product==='MP3'?'selected':''}>MP3</option>
@@ -601,7 +605,7 @@ function renderRestockRows(){
       </select>
       <input type="date" value="${r.date}" data-idx="${i}" ${isActual?'style="border-color:rgba(55,138,221,0.35);background:rgba(55,138,221,0.04);"':''}/>
       <input type="number" value="${r.units}" min="0" step="50" style="width:70px;text-align:right;${isActual?'border-color:rgba(55,138,221,0.35);background:rgba(55,138,221,0.04);':''}" data-idx="${i}"/>
-      <span class="re-variance" style="color:${v.color};background:${v.bg};" title="Planned: ${r.plannedDate}">${v.text}</span>
+      ${varianceHtml||'<span></span>'}
       <button class="btn-remove" data-remove="${i}">&times;</button>
     </div>`;
   }).join('');
@@ -1466,7 +1470,10 @@ function renderDeliveryRows(){
       const product=r.product||'MP3';
       const pColor=PRODUCT_COLOR[product];
       const varDays=restockVarianceDays(r);
-      const v=fmtVariance(varDays);
+      const varianceHtml=varDays!==0?(()=>{
+        const v=fmtVariance(varDays);
+        return `<span class="re-variance" style="color:${v.color};background:${v.bg};" title="Planned: ${r.plannedDate}">${v.text}</span>`;
+      })():'<span></span>';
       // Note field only shown once there's actually a variance to note —
       // keeps on-plan shipments from cluttering the modal.
       const reasonRow=varDays!==0?`<div style="grid-column:1/-1;margin:-2px 0 6px;">
@@ -1483,7 +1490,7 @@ function renderDeliveryRows(){
         <option value="Expected" ${r.status==='Expected'?'selected':''}>Expected</option>
       </select>
       <div class="dr-static">${r.units.toLocaleString()}</div>
-      <span class="re-variance" style="color:${v.color};background:${v.bg};" title="Planned: ${r.plannedDate}">${v.text}</span>
+      ${varianceHtml}
       <input type="text" data-idx="${i}" data-field="batch" value="${r.batch.replace(/"/g,'&quot;')}"/>
       <input type="text" data-idx="${i}" data-field="source" value="${r.source.replace(/"/g,'&quot;')}" placeholder="e.g. Linear MFG-13"/>
       <button class="btn-remove-sm" data-remove="${i}">&times;</button>
@@ -1538,9 +1545,12 @@ function renderEmailPreview(){
     const statusColor=status==='Received'?'#1D9E75':'#5F5E5A';
     const product=r.product||'MP3';
     const varDays=restockVarianceDays(r);
-    const v=fmtVariance(varDays);
+    const varianceHtml=varDays!==0?(()=>{
+      const v=fmtVariance(varDays);
+      return `<span style="display:inline-block;padding:2px 8px;border-radius:10px;font-weight:700;color:${v.color};background:${v.bg};">${v.text}</span>`;
+    })():'';
     return `<tr>
-      <td style="color:${PRODUCT_COLOR[product]};font-weight:700;">${product}</td><td>${r.date}</td><td style="color:${statusColor};font-weight:600;">${status}</td><td>${r.units.toLocaleString()}</td><td><span style="display:inline-block;padding:2px 8px;border-radius:10px;font-weight:700;color:${v.color};background:${v.bg};">${v.text}</span></td><td>${r.batch||'—'}</td><td>${r.source||'—'}</td>
+      <td style="color:${PRODUCT_COLOR[product]};font-weight:700;">${product}</td><td>${r.date}</td><td style="color:${statusColor};font-weight:600;">${status}</td><td>${r.units.toLocaleString()}</td><td>${varianceHtml}</td><td>${r.batch||'—'}</td><td>${r.source||'—'}</td>
     </tr>`;
   }).join('');
   const delayNotes=deliveryRows.filter(r=>r.delayReason&&r.delayReason.trim()).map(r=>
@@ -1600,8 +1610,8 @@ function buildEmailPlainText(){
   t+=`Product\tDate\tStatus\tQty\tVariance\tBatch\tSource\n`;
   deliveryRows.forEach(r=>{
     const varDays=restockVarianceDays(r);
-    const v=fmtVariance(varDays);
-    t+=`${r.product||'MP3'}\t${r.date}\t${r.status}\t${r.units.toLocaleString()}\t${v.text}\t${r.batch||'—'}\t${r.source||'—'}\n`;
+    const varText=varDays!==0?fmtVariance(varDays).text:'—';
+    t+=`${r.product||'MP3'}\t${r.date}\t${r.status}\t${r.units.toLocaleString()}\t${varText}\t${r.batch||'—'}\t${r.source||'—'}\n`;
   });
   const delayNotesText=deliveryRows.filter(r=>r.delayReason&&r.delayReason.trim()).map(r=>`- ${r.product||'MP3'} ${r.date}: ${r.delayReason}`).join('\n');
   if(delayNotesText) t+=`\n📝 Schedule notes\n${delayNotesText}\n`;
