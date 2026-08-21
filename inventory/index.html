@@ -490,9 +490,9 @@ function restockVarianceDays(r){
   return daysBetween(parseDate(planned), parseDate(r.date));
 }
 function fmtVariance(days){
-  if(days===0) return {text:'On time', color:'#378ADD'};
-  if(days>0) return {text:`+${days}d late`, color:'#c0392b'};
-  return {text:`${Math.abs(days)}d early`, color:'#16A085'};
+  if(days===0) return {text:'On plan', color:'#378ADD'};
+  if(days>0) return {text:`+${days}d`, color:'#5F5E5A'};
+  return {text:`${days}d`, color:'#5F5E5A'};
 }
 const PRODUCT_COLOR={MP3:'#1D9E75',MP4:'#8E44AD'};
 
@@ -1460,10 +1460,10 @@ function renderDeliveryRows(){
       const pColor=PRODUCT_COLOR[product];
       const varDays=restockVarianceDays(r);
       const v=fmtVariance(varDays);
-      // Reason field only shown once there's actually a variance to
-      // explain — keeps on-time shipments from cluttering the modal.
+      // Note field only shown once there's actually a variance to note —
+      // keeps on-plan shipments from cluttering the modal.
       const reasonRow=varDays!==0?`<div style="grid-column:1/-1;margin:-2px 0 6px;">
-        <input type="text" data-idx="${i}" data-field="delayReason" value="${(r.delayReason||'').replace(/"/g,'&quot;')}" placeholder="Reason for ${varDays>0?'the delay':'shipping early'} (optional — included in the email)" style="font-size:11px;padding:5px 7px;border-radius:6px;border:1px solid rgba(192,57,43,0.25);background:rgba(192,57,43,0.04);width:100%;"/>
+        <input type="text" data-idx="${i}" data-field="delayReason" value="${(r.delayReason||'').replace(/"/g,'&quot;')}" placeholder="Note about this schedule change (optional — included in the email)" style="font-size:11px;padding:5px 7px;border-radius:6px;border:1px solid rgba(0,0,0,0.12);background:#f5f4f0;width:100%;"/>
       </div>`:'';
       return `<div class="deliv-row">
       <div class="dr-static">${r.date}</div>
@@ -1563,7 +1563,7 @@ function renderEmailPreview(){
     <table class="ep-tbl2"><tr><th>Date</th><th>Flips to</th><th style="text-align:right;">~Balance</th></tr>${timelineRows||'<tr><td colspan=3>No upcoming flips in projection window</td></tr>'}</table>
     <div class="ep-section-title">📦 Inbound deliveries (driving the projection)</div>
     <table class="ep-tbl2"><tr><th>Product</th><th>Date</th><th>Status</th><th>Qty</th><th>Variance</th><th>Batch</th><th>Source</th></tr>${delivRowsHtml||'<tr><td colspan=7>No deliveries in window</td></tr>'}</table>
-    ${delayNotes?`<div class="ep-section-title">📝 Delay notes</div><div style="font-size:11px;color:#5F5E5A;">${delayNotes}</div>`:''}
+    ${delayNotes?`<div class="ep-section-title">📝 Schedule notes</div><div style="font-size:11px;color:#5F5E5A;">${delayNotes}</div>`:''}
   `;
 }
 
@@ -1597,7 +1597,7 @@ function buildEmailPlainText(){
     t+=`${r.product||'MP3'}\t${r.date}\t${r.status}\t${r.units.toLocaleString()}\t${varDays!==0?v.text:'—'}\t${r.batch||'—'}\t${r.source||'—'}\n`;
   });
   const delayNotesText=deliveryRows.filter(r=>r.delayReason&&r.delayReason.trim()).map(r=>`- ${r.product||'MP3'} ${r.date}: ${r.delayReason}`).join('\n');
-  if(delayNotesText) t+=`\n📝 Delay notes\n${delayNotesText}\n`;
+  if(delayNotesText) t+=`\n📝 Schedule notes\n${delayNotesText}\n`;
   return t;
 }
 
