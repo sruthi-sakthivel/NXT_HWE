@@ -39,6 +39,8 @@ body{background:#fff;}
 .re-product{font-size:10px;font-weight:700;padding:4px 2px;border-radius:6px;text-align:center;cursor:pointer;}
 .re-row:last-child{margin-bottom:0;}
 .re-lbl{font-size:12px;color:#5F5E5A;}
+.re-header span{font-size:9px;font-weight:600;color:#B4B2A9;text-transform:uppercase;letter-spacing:.03em;text-align:center;}
+.re-variance{font-size:10px;font-weight:700;padding:3px 0;border-radius:6px;text-align:center;font-variant-numeric:tabular-nums;white-space:nowrap;}
 input[type=date],input[type=number]{font-size:12px;padding:4px 7px;border-radius:7px;border:1px solid rgba(0,0,0,0.12);background:#fff;color:#1a1a18;width:100%;}
 input[type=number]{width:70px;text-align:right;}
 .btn-remove{background:none;border:none;cursor:pointer;color:#B4B2A9;font-size:14px;line-height:1;padding:2px;border-radius:4px;display:flex;align-items:center;justify-content:center;}
@@ -163,11 +165,11 @@ input[type=number]{width:70px;text-align:right;}
     </div>
     <div class="cp">
       <div class="cp-lbl">Restock events</div>
-      <div class="re-row" style="margin-bottom:6px;">
-        <span style="font-size:9px;color:#B4B2A9;text-transform:uppercase;">Product</span>
-        <span style="font-size:9px;color:#B4B2A9;text-transform:uppercase;">Date</span>
-        <span style="font-size:9px;color:#B4B2A9;text-transform:uppercase;">Qty</span>
-        <span style="font-size:9px;color:#B4B2A9;text-transform:uppercase;text-align:right;">Variance</span>
+      <div class="re-row re-header">
+        <span>Product</span>
+        <span style="text-align:left;">Date</span>
+        <span>Qty</span>
+        <span>Variance</span>
         <span></span>
       </div>
       <div id="restockRows"></div>
@@ -497,9 +499,8 @@ function restockVarianceDays(r){
   return daysBetween(parseDate(planned), parseDate(r.date));
 }
 function fmtVariance(days){
-  if(days===0) return {text:'On plan', color:'#378ADD'};
-  if(days>0) return {text:`+${days}d`, color:'#5F5E5A'};
-  return {text:`${days}d`, color:'#5F5E5A'};
+  if(days===0) return {text:'On plan', color:'#378ADD', bg:'rgba(55,138,221,0.12)'};
+  return {text:`${days>0?'+':''}${days}d`, color:'#5F5E5A', bg:'rgba(0,0,0,0.06)'};
 }
 const PRODUCT_COLOR={MP3:'#1D9E75',MP4:'#8E44AD'};
 
@@ -593,7 +594,6 @@ function renderRestockRows(){
     const color=PRODUCT_COLOR[product];
     const varDays=restockVarianceDays(r);
     const v=fmtVariance(varDays);
-    const showVar=varDays!==0;
     return `<div class="re-row">
       <select class="re-product" data-idx="${i}" style="border:1px solid ${color}55;background:${color}18;color:${color};">
         <option value="MP3" ${product==='MP3'?'selected':''}>MP3</option>
@@ -601,7 +601,7 @@ function renderRestockRows(){
       </select>
       <input type="date" value="${r.date}" data-idx="${i}" ${isActual?'style="border-color:rgba(55,138,221,0.35);background:rgba(55,138,221,0.04);"':''}/>
       <input type="number" value="${r.units}" min="0" step="50" style="width:70px;text-align:right;${isActual?'border-color:rgba(55,138,221,0.35);background:rgba(55,138,221,0.04);':''}" data-idx="${i}"/>
-      <span style="font-size:10px;font-weight:700;text-align:right;white-space:nowrap;color:${showVar?v.color:'#B4B2A9'};" title="${showVar?`Planned: ${r.plannedDate}`:'On plan'}">${showVar?v.text:'—'}</span>
+      <span class="re-variance" style="color:${v.color};background:${v.bg};" title="Planned: ${r.plannedDate}">${v.text}</span>
       <button class="btn-remove" data-remove="${i}">&times;</button>
     </div>`;
   }).join('');
@@ -1483,7 +1483,7 @@ function renderDeliveryRows(){
         <option value="Expected" ${r.status==='Expected'?'selected':''}>Expected</option>
       </select>
       <div class="dr-static">${r.units.toLocaleString()}</div>
-      <div class="dr-static" style="color:${varDays!==0?v.color:'#5F5E5A'};font-weight:700;" title="${varDays!==0?`Planned: ${r.plannedDate}`:'On plan'}">${varDays!==0?v.text:'—'}</div>
+      <span class="re-variance" style="color:${v.color};background:${v.bg};" title="Planned: ${r.plannedDate}">${v.text}</span>
       <input type="text" data-idx="${i}" data-field="batch" value="${r.batch.replace(/"/g,'&quot;')}"/>
       <input type="text" data-idx="${i}" data-field="source" value="${r.source.replace(/"/g,'&quot;')}" placeholder="e.g. Linear MFG-13"/>
       <button class="btn-remove-sm" data-remove="${i}">&times;</button>
@@ -1540,7 +1540,7 @@ function renderEmailPreview(){
     const varDays=restockVarianceDays(r);
     const v=fmtVariance(varDays);
     return `<tr>
-      <td style="color:${PRODUCT_COLOR[product]};font-weight:700;">${product}</td><td>${r.date}</td><td style="color:${statusColor};font-weight:600;">${status}</td><td>${r.units.toLocaleString()}</td><td style="${varDays!==0?`color:${v.color};font-weight:600;`:''}">${varDays!==0?v.text:'—'}</td><td>${r.batch||'—'}</td><td>${r.source||'—'}</td>
+      <td style="color:${PRODUCT_COLOR[product]};font-weight:700;">${product}</td><td>${r.date}</td><td style="color:${statusColor};font-weight:600;">${status}</td><td>${r.units.toLocaleString()}</td><td><span style="display:inline-block;padding:2px 8px;border-radius:10px;font-weight:700;color:${v.color};background:${v.bg};">${v.text}</span></td><td>${r.batch||'—'}</td><td>${r.source||'—'}</td>
     </tr>`;
   }).join('');
   const delayNotes=deliveryRows.filter(r=>r.delayReason&&r.delayReason.trim()).map(r=>
@@ -1601,7 +1601,7 @@ function buildEmailPlainText(){
   deliveryRows.forEach(r=>{
     const varDays=restockVarianceDays(r);
     const v=fmtVariance(varDays);
-    t+=`${r.product||'MP3'}\t${r.date}\t${r.status}\t${r.units.toLocaleString()}\t${varDays!==0?v.text:'—'}\t${r.batch||'—'}\t${r.source||'—'}\n`;
+    t+=`${r.product||'MP3'}\t${r.date}\t${r.status}\t${r.units.toLocaleString()}\t${v.text}\t${r.batch||'—'}\t${r.source||'—'}\n`;
   });
   const delayNotesText=deliveryRows.filter(r=>r.delayReason&&r.delayReason.trim()).map(r=>`- ${r.product||'MP3'} ${r.date}: ${r.delayReason}`).join('\n');
   if(delayNotesText) t+=`\n📝 Schedule notes\n${delayNotesText}\n`;
