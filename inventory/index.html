@@ -149,18 +149,11 @@ input[type=number]{width:70px;text-align:right;}
   </div>
 
   <div class="stats" id="statRow"></div>
-  <div class="leg-hint" style="margin-top:-10px;">💡 Backorder periods and "stock lasts through" above are based on the Direct Units projection, not Total Units. Data will use the Total Units projection plan after PPR is finalized.</div>
+  <div class="leg-hint" style="margin-top:-10px;">💡 Backorder periods and "stock lasts through" above are based on the Direct Units projection.</div>
 
   <div class="ctrls">
     <div class="cp">
       <div class="cp-lbl">Sales projection / day</div>
-      <div class="ri" style="margin-bottom:6px;">
-        <span class="ri-per"></span>
-        <span style="display:flex;gap:6px;">
-          <span style="width:54px;text-align:center;font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.04em;color:#378ADD;">Total</span>
-          <span style="width:54px;text-align:center;font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.04em;color:#16A085;">Direct</span>
-        </span>
-      </div>
       <div id="rateRows"></div>
     </div>
     <div class="cp">
@@ -187,9 +180,6 @@ input[type=number]{width:70px;text-align:right;}
   <div class="leg">
     <span class="li"><span style="width:20px;height:2px;background:#378ADD;display:inline-block;border-radius:2px;"></span>In stock
       <span style="width:20px;height:2px;background:#c0392b;display:inline-block;border-radius:2px;margin-left:6px;"></span>Backordered</span>
-    <span class="li li-toggle" id="legToggleTotal" title="Click to show/hide the Total Units sales projection">
-      <span style="width:20px;height:0;border-top:2px dotted #5F5E5A;display:inline-block;"></span>Total Units
-    </span>
     <span class="li li-toggle" id="legToggleDirect" title="Click to show/hide the Direct Units sales projection">
       <span style="width:20px;height:0;border-top:2px solid #5F5E5A;display:inline-block;"></span>Direct Units
     </span>
@@ -199,7 +189,7 @@ input[type=number]{width:70px;text-align:right;}
     <span class="li"><span style="width:20px;height:1px;border-top:1.5px dashed #5F5E5A;display:inline-block;"></span>Today</span>
     <span class="li li-toggle" id="btnLiveHistory" style="margin-left:auto;color:#D6336C;font-weight:600;">📋 Live history ▾</span>
   </div>
-  <div class="leg-hint">💡 Click Total Units or Direct Units to see inventory changes based on that projection plan. Color always shows in stock (blue) vs backordered (red).</div>
+  <div class="leg-hint">💡 Click Direct Units to show/hide the sales projection line. Color always shows in stock (blue) vs backordered (red).</div>
 
   <div id="liveHistoryPanel" style="display:none;margin:-4px 0 14px;">
     <table class="ep-tbl2" id="liveHistoryTable" style="width:100%;"></table>
@@ -419,18 +409,14 @@ const ITEM_RESTOCKS=[
 
 const START=new Date(2026,4,5); // May 5
 // 240 = Dec 31, 2026; extended to 299 = Feb 28, 2027 so the Smartbuds chart
-// can show Jan/Feb 2027 too (see TOTAL_UNITS_SOLD/DIRECT_UNITS_SOLD below,
-// which carry the Dec rate flat through those two months — no real data or
-// new rate guidance exists for them yet).
+// can show Jan/Feb 2027 too (see DIRECT_UNITS_SOLD below, which carries
+// Dec's rate flat through those two months — no real data or new rate
+// guidance exists for them yet).
 const END_DAY=299;
 
-// Smartbuds daily sales projections from "Sales Projections_and_Inventory.xlsx"
-// (Daily sheet, Total Units / Direct Units columns), day-indexed from START
-// (day 0 = May 5, 2026) through day 240 (Dec 31, 2026), then extended
-// through day 299 (Feb 28, 2027) by carrying the Dec rate flat — there's
-// no real data or new rate guidance for Jan/Feb 2027 yet.
-const TOTAL_UNITS_SOLD=[16,23,18,21,22,40,19,11,9,15,51,25,28,21,19,19,32,42,34,34,52,20,24,8,25,14,21,32,43,17,36,22,22,43,29,19,22,20,23,20,22,21,34,48,39,27,27,43,23,27,27,27,27,27,27,27,27,27,27,27,27,27,27,27,27,27,27,27,27,27,27,27,27,27,27,27,27,27,27,27,27,27,27,27,27,27,27,27,29,29,29,29,29,29,29,29,29,29,29,29,29,29,29,29,29,29,29,29,29,29,29,29,29,29,29,29,29,29,29,31,31,31,31,31,31,31,31,31,31,31,31,31,31,31,31,31,31,31,31,31,31,31,31,31,31,31,31,31,31,38,38,38,38,38,38,38,38,38,38,38,38,38,38,38,38,38,38,38,38,38,38,38,38,38,38,38,38,38,38,38,49,49,49,49,49,49,49,49,49,49,49,49,49,49,49,49,49,49,49,49,49,49,49,49,49,49,49,49,49,49,59,59,59,59,59,59,59,59,59,59,59,59,59,59,59,59,59,59,59,59,59,59,59,59,59,59,59,59,59,59,59,59,59,59,59,59,59,59,59,59,59,59,59,59,59,59,59,59,59,59,59,59,59,59,59,59,59,59,59,59,59,59,59,59,59,59,59,59,59,59,59,59,59,59,59,59,59,59,59,59,59,59,59,59,59,59,59,59,59,59];
-const DIRECT_UNITS_SOLD=[16,23,18,21,22,40,19,11,9,15,51,25,28,21,19,19,32,42,34,34,52,20,24,8,25,14,21,32,43,17,36,22,22,43,29,19,22,20,23,20,22,21,34,48,39,27,27,43,23,27,27,27,27,27,27,27,27,27,27,27,27,27,27,27,27,27,27,27,27,27,27,27,27,27,27,27,27,27,27,27,27,27,27,27,27,27,27,27,29,29,29,29,29,29,29,29,29,29,29,29,29,29,29,29,29,29,29,29,29,29,29,29,29,29,29,29,29,29,29,31,31,31,31,31,31,31,31,31,31,31,31,31,31,31,31,31,31,31,31,31,31,31,31,31,31,31,31,31,31,29,29,29,29,29,29,29,29,29,29,29,29,29,29,29,29,29,29,29,29,29,29,29,29,29,29,29,29,29,29,29,37,37,37,37,37,37,37,37,37,37,37,37,37,37,37,37,37,37,37,37,37,37,37,37,37,37,37,37,37,37,44,44,44,44,44,44,44,44,44,44,44,44,44,44,44,44,44,44,44,44,44,44,44,44,44,44,44,44,44,44,44,44,44,44,44,44,44,44,44,44,44,44,44,44,44,44,44,44,44,44,44,44,44,44,44,44,44,44,44,44,44,44,44,44,44,44,44,44,44,44,44,44,44,44,44,44,44,44,44,44,44,44,44,44,44,44,44,44,44,44];
+// Smartbuds daily sales projection (Direct Units), day-indexed from START
+// (day 0 = May 5, 2026) through day 299 (Feb 28, 2027).
+const DIRECT_UNITS_SOLD=[16,23,18,21,22,40,19,11,9,15,51,25,28,21,19,19,32,42,34,34,52,20,24,8,25,14,21,32,43,17,36,22,22,43,29,19,22,20,23,20,22,21,34,48,39,27,27,43,23,27,27,27,27,27,27,27,27,27,27,27,27,27,27,27,27,27,27,27,27,27,27,27,27,27,27,27,27,27,27,27,27,27,27,27,27,27,27,27,29,29,29,29,29,29,29,29,29,29,29,29,29,29,29,29,29,29,29,29,29,21,21,21,21,21,21,21,21,21,21,22,22,22,22,22,22,22,22,22,22,22,22,22,22,22,22,22,22,22,22,22,22,22,22,22,22,22,22,22,22,21,21,21,21,21,21,21,21,21,21,21,21,21,21,21,21,21,21,21,21,21,21,21,21,21,21,21,21,21,21,21,22,22,22,22,22,22,22,22,22,22,22,22,22,22,22,22,22,22,22,22,22,22,22,22,22,22,22,22,22,22,21,21,21,21,21,21,21,21,21,21,21,21,21,21,21,21,21,21,21,21,21,21,21,21,21,21,21,21,21,21,21,21,21,21,21,21,21,21,21,21,21,21,21,21,21,21,21,21,21,21,21,21,21,21,21,21,21,21,21,21,21,21,21,21,21,21,21,21,21,21,21,21,21,21,21,21,21,21,21,21,21,21,21,21,21,21,21,21,21,21];
 
 
 const MONTHS=[
@@ -457,9 +443,9 @@ function monthRange(year,monthIdx0){
 const MONTHS_TX=[2,3,4,5,6,7,8,9,10,11].map(m=>({name:MONTH_NAMES[m],...monthRange(2026,m)}));
 
 // Extend the Smartbuds chart's selectable range into Jan/Feb 2027 — beyond
-// END_DAY's original Dec 31, 2026 cutoff (see extended TOTAL_UNITS_SOLD/
-// DIRECT_UNITS_SOLD/END_DAY below, which carry the Dec rate flat forward
-// through these two months since there's no real data or new rate
+// END_DAY's original Dec 31, 2026 cutoff (see DIRECT_UNITS_SOLD/END_DAY
+// above, which carry the Dec rate flat forward through these two months
+// since there's no real data or new rate
 // guidance for them yet). Kept as separate .push() calls (not folded into
 // the literal above) so the original 8-month 2026 array stays easy to read.
 MONTHS.push({name:'Jan', ...monthRange(2027,0)});
@@ -472,7 +458,7 @@ function hexToRgba(hex,alpha){
 }
 
 let viewStart=0, viewEnd=8; // May through Jan by default; "Full range" extends through Feb
-let showTotal=true, showDirect=true;
+let showDirect=true;
 // plannedDate = the originally committed ship date, fixed once set.
 // date = current best-known date: for pending restocks this tracks the
 // plan (kept equal to plannedDate until shipped), for actual:true
@@ -636,10 +622,8 @@ document.getElementById('btnAdd').addEventListener('click',()=>{
   renderRestockRows();update();
 });
 
-// soldArray: per-day units-sold projection (TOTAL_UNITS_SOLD or
-// DIRECT_UNITS_SOLD) driving the line for days after ACTUAL_END. Actual
-// history (day<=ACTUAL_END) is identical for every scenario since it's
-// real data, not a projection choice.
+// soldArray: per-day units-sold projection (DIRECT_UNITS_SOLD) driving
+// the line for days after ACTUAL_END.
 function calcScenario(soldArray){
   const restockMap={};
   restocks.forEach(r=>{
@@ -686,7 +670,7 @@ function calcScenario(soldArray){
 }
 
 function calcData(){
-  return{total:calcScenario(TOTAL_UNITS_SOLD),direct:calcScenario(DIRECT_UNITS_SOLD)};
+  return{direct:calcScenario(DIRECT_UNITS_SOLD)};
 }
 
 // Seeds a single point (today, from the currently-loaded LIVE_STOCK) for
@@ -729,9 +713,6 @@ function renderItemLegend(){
     }));
 }
 
-// Stats cards reflect the Direct Units scenario specifically — noted in
-// the row so it's not read as scenario-agnostic now that there are two
-// projection lines. Will switch to Total Units once PPR is finalized.
 function renderStats(d){
   const z=d.zones;
   const b1=`<div class="st"><div class="sl">Starting Smartbud Stock (May 5)</div><div class="sv">82 units</div></div>`;
@@ -897,49 +878,32 @@ const multiAxisPlugin={id:'maxis',afterDraw(ch,_,opts){
   ctx.restore();
 }};
 
-// Fixed per-scenario colors (not sign-based) so Total Units vs Direct Units
-// stay visually distinct even when both are backordered at once.
-const SCENARIO_STYLE={
-  total:{label:'Total Units',border:'#378ADD',bg:'rgba(55,138,221,0.08)'},
-  direct:{label:'Direct Units',border:'#16A085',bg:'rgba(22,160,133,0.08)'},
-};
-
 function buildChart(calc){
   const wS=MONTHS[viewStart].start,wE=MONTHS[viewEnd].end;
-  const totalSliced=calc.total.values.slice(wS,wE+1);
   const directSliced=calc.direct.values.slice(wS,wE+1);
-  const labels=totalSliced.map((_,i)=>fmtDate(dayToDate(i+wS)));
+  const labels=directSliced.map((_,i)=>fmtDate(dayToDate(i+wS)));
   const liveValsInWindow=LIVE_HISTORY.filter(h=>h.day>=wS&&h.day<=wE).map(h=>h.balance);
-  const allVals=[...totalSliced,...directSliced,...liveValsInWindow,0];
+  const allVals=[...directSliced,...liveValsInWindow,0];
   const yMin=Math.min(...allVals)<0?Math.floor(Math.min(...allVals)/50)*50:0;
   const yMax=Math.ceil(Math.max(...allVals)/50)*50||50;
 
-  // Color = status (blue in stock / red backordered), applied per-segment so
-  // each line's own crossings are colored independently. Line style
-  // distinguishes the two scenarios: solid = Direct Units, dotted = Total
-  // Units — since color is now spoken for by status, not scenario.
-  const mkDataset=(key,data,hidden)=>{
-    const dash=key==='total'?[2,3]:[];
-    return{
-      label:SCENARIO_STYLE[key].label,data,hidden,
-      fill:'origin',tension:0,pointRadius:0,pointHoverRadius:5,
-      pointHoverBorderColor:'#fff',pointHoverBorderWidth:2,borderWidth:2,
-      borderDash:dash,
-      segment:{
-        borderColor:ctx=>ctx.p1.parsed.y<0?'rgba(192,57,43,0.9)':'#378ADD',
-        backgroundColor:ctx=>ctx.p1.parsed.y<0?'rgba(192,57,43,0.10)':'rgba(55,138,221,0.08)',
-      },
-      borderColor:'#378ADD',backgroundColor:'rgba(55,138,221,0.08)',
-      pointHoverBackgroundColor:ctx=>data[ctx.dataIndex]<0?'#c0392b':'#378ADD',
-    };
+  // Color = status (blue in stock / red backordered), applied per-segment
+  // so the line's own crossings are colored independently.
+  const directDataset={
+    label:'Direct Units',data:directSliced,hidden:!showDirect,
+    fill:'origin',tension:0,pointRadius:0,pointHoverRadius:5,
+    pointHoverBorderColor:'#fff',pointHoverBorderWidth:2,borderWidth:2,
+    segment:{
+      borderColor:ctx=>ctx.p1.parsed.y<0?'rgba(192,57,43,0.9)':'#378ADD',
+      backgroundColor:ctx=>ctx.p1.parsed.y<0?'rgba(192,57,43,0.10)':'rgba(55,138,221,0.08)',
+    },
+    borderColor:'#378ADD',backgroundColor:'rgba(55,138,221,0.08)',
+    pointHoverBackgroundColor:ctx=>directSliced[ctx.dataIndex]<0?'#c0392b':'#378ADD',
   };
 
   const cfg={
     type:'line',
-    data:{labels,datasets:[
-      mkDataset('total',totalSliced,!showTotal),
-      mkDataset('direct',directSliced,!showDirect),
-    ]},
+    data:{labels,datasets:[directDataset]},
     options:{
       responsive:true,maintainAspectRatio:false,animation:{duration:150},
       layout:{padding:{top:80,right:8,bottom:70}},
@@ -1212,22 +1176,18 @@ function renderRateTable(){
   const periods=[{start:ACTUAL_END+1,end:MONTHS[1].end}];
   for(let i=2;i<MONTHS.length;i++) periods.push({start:MONTHS[i].start,end:MONTHS[i].end});
   const rows=periods.map(p=>{
-    const t=avgRate(TOTAL_UNITS_SOLD,p.start,p.end);
     const d=avgRate(DIRECT_UNITS_SOLD,p.start,p.end);
     return `<div class="ri">
       <span class="ri-per">${fmtRangeLabel(p.start,p.end)}</span>
-      <span style="display:flex;gap:6px;">
-        <span class="ri-val" style="width:54px;text-align:center;color:#378ADD;">${t}/day</span>
-        <span class="ri-val" style="width:54px;text-align:center;color:#16A085;">${d}/day</span>
-      </span>
+      <span class="ri-val">${d}/day</span>
     </div>`;
   }).join('');
-  c.innerHTML=`<div class="ri"><span class="ri-per">${actualLabel}</span><span class="ri-val actual" style="width:114px;text-align:center;">Actual data</span></div>${rows}`;
+  c.innerHTML=`<div class="ri"><span class="ri-per">${actualLabel}</span><span class="ri-val actual">Actual data</span></div>${rows}`;
 }
 
 function update(){
   const calc=calcData();
-  window.__lastCalc=calc.direct; // email draft + stats key off the Direct Units scenario (until PPR finalizes Total Units)
+  window.__lastCalc=calc.direct; // email draft + stats key off the Direct Units scenario
   renderStats(calc.direct);
   buildChart(calc);
   buildItemChart();
@@ -1256,16 +1216,10 @@ update();
 loadLiveData();
 
 function updateToggleLegendUI(){
-  document.getElementById('legToggleTotal').classList.toggle('off',!showTotal);
   document.getElementById('legToggleDirect').classList.toggle('off',!showDirect);
 }
 updateToggleLegendUI();
 
-document.getElementById('legToggleTotal').addEventListener('click',()=>{
-  showTotal=!showTotal;
-  updateToggleLegendUI();
-  update();
-});
 document.getElementById('legToggleDirect').addEventListener('click',()=>{
   showDirect=!showDirect;
   updateToggleLegendUI();
@@ -1576,7 +1530,7 @@ function renderEmailPreview(){
     <div class="ep-section-title">🔌 Live stock — Rush Order (as of ${LIVE_STOCK.fetchedAt})</div>
     <table class="ep-tbl2"><tr><th>Item</th><th style="text-align:right;">Available</th><th style="text-align:right;">Committed</th><th style="text-align:right;">Backordered</th></tr>${liveRowsHtml}</table>
     <div class="ep-section-title">📅 Projected in/out timeline</div>
-    <div style="font-size:10px;color:#888780;margin:-2px 0 6px;">Based on the Direct Units projection, not Total Units. Will use the Total Units projection plan after PPR is finalized.</div>
+    <div style="font-size:10px;color:#888780;margin:-2px 0 6px;">Based on the Direct Units projection.</div>
     <table class="ep-tbl2"><tr><th>Date</th><th>Flips to</th><th style="text-align:right;">~Balance</th></tr>${timelineRows||'<tr><td colspan=3>No upcoming flips in projection window</td></tr>'}</table>
     <div class="ep-section-title">📦 Inbound deliveries (driving the projection)</div>
     <table class="ep-tbl2"><tr><th>Product</th><th>Date</th><th>Status</th><th>Qty</th><th>Schedule Variance</th><th>Batch</th><th>Source</th></tr>${delivRowsHtml||'<tr><td colspan=7>No deliveries in window</td></tr>'}</table>
@@ -1603,7 +1557,7 @@ function buildEmailPlainText(){
   t+=`🔌 Live stock — Rush Order (as of ${LIVE_STOCK.fetchedAt})\n`;
   t+=`Item\tAvailable\tCommitted\tBackordered\n`;
   LIVE_STOCK.items.forEach(it=>{t+=`${it.name}\t${it.available.toLocaleString()}\t${it.committed.toLocaleString()}\t${it.backorder.toLocaleString()}\n`;});
-  t+=`\n📅 Projected in/out timeline (based on Direct Units projection, not Total Units — will use Total Units after PPR is finalized)\n`;
+  t+=`\n📅 Projected in/out timeline (based on Direct Units projection)\n`;
   t+=`Date\tFlips to\t~Balance\n`;
   m.timeline.forEach(f=>{t+=`${f.date}\t${f.type==='OUT OF STOCK'?'BACKORDERED':'POSITIVE STOCK'}\t${f.balance.toLocaleString()}\n`;});
   t+=`\n📦 Inbound deliveries (driving the projection)\n`;
