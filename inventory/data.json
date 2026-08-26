@@ -22,8 +22,8 @@
         "key": "tipsM",
         "name": "Tips — Medium",
         "sku": "NSEMTB0201C-W",
-        "available": 1181,
-        "committed": 84,
+        "available": 1175,
+        "committed": 90,
         "backorder": 0
       },
       {
@@ -54,8 +54,8 @@
         "key": "wingsL",
         "name": "Sleeves — Large",
         "sku": "NSEMWX0103T-W",
-        "available": 465,
-        "committed": 0,
+        "available": 459,
+        "committed": 6,
         "backorder": 0
       }
     ]
@@ -659,7 +659,7 @@
       {
         "date": "2026-08-26",
         "day": 113,
-        "balance": 1181
+        "balance": 1175
       }
     ],
     "tipsL": [
@@ -1387,9 +1387,9 @@
       {
         "date": "2026-08-26",
         "day": 113,
-        "balance": 465
+        "balance": 459
       }
     ]
   },
-  "lastRefreshed": "2026-08-26T16:03:13.516Z"
+  "lastRefreshed": "2026-08-26T16:56:45.088Z"
 }
