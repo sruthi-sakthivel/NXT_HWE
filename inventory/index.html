@@ -1319,7 +1319,7 @@ function computeFlips(d){
 
 function computeSalesRate(){
   if(TODAY_DAY>ACTUAL_END){
-    return {rate:DIRECT_UNITS_SOLD[TODAY_DAY]||0,label:'units/day (Direct Units projected)'};
+    return {rate:DIRECT_UNITS_SOLD[TODAY_DAY]||0,label:'units/day'};
   }
   // trailing 30-day avg from actuals
   const endIdx=Math.min(TODAY_DAY,ACTUAL_END);
@@ -1330,7 +1330,7 @@ function computeSalesRate(){
     const avg=Math.round((drop/days)*10)/10;
     return {rate:avg,label:'units/day ('+days+'d actual avg)'};
   }
-  return {rate:DIRECT_UNITS_SOLD[TODAY_DAY]||0,label:'units/day (Direct Units projected)'};
+  return {rate:DIRECT_UNITS_SOLD[TODAY_DAY]||0,label:'units/day'};
 }
 
 function buildEmailModel(){
@@ -1538,7 +1538,7 @@ function renderEmailPreview(){
     <div class="ep-section-title">📅 Projected in/out timeline</div>
     <div style="font-size:10px;color:#888780;margin:-2px 0 6px;">Based on the Direct Units projection.</div>
     <table class="ep-tbl2"><tr><th>Date</th><th>Flips to</th><th style="text-align:right;">~Balance</th></tr>${timelineRows||'<tr><td colspan=3>No upcoming flips in projection window</td></tr>'}</table>
-    <div class="ep-section-title">📦 Inbound deliveries (driving the projection)</div>
+    <div class="ep-section-title">📦 Inbound deliveries</div>
     <table class="ep-tbl2"><tr><th>Product</th><th>Date</th><th>Status</th><th>Qty</th><th>Schedule Variance</th><th>Batch</th><th>Source</th></tr>${delivRowsHtml||'<tr><td colspan=7>No deliveries in window</td></tr>'}</table>
     ${delayNotes?`<div class="ep-section-title">📝 Schedule notes</div><div style="font-size:11px;color:#5F5E5A;">${delayNotes}</div>`:''}
   `;
@@ -1566,7 +1566,7 @@ function buildEmailPlainText(){
   t+=`\n📅 Projected in/out timeline (based on Direct Units projection)\n`;
   t+=`Date\tFlips to\t~Balance\n`;
   m.timeline.forEach(f=>{t+=`${f.date}\t${f.type==='OUT OF STOCK'?'BACKORDERED':'POSITIVE STOCK'}\t${f.balance.toLocaleString()}\n`;});
-  t+=`\n📦 Inbound deliveries (driving the projection)\n`;
+  t+=`\n📦 Inbound deliveries\n`;
   t+=`Product\tDate\tStatus\tQty\tSchedule Variance\tBatch\tSource\n`;
   deliveryRows.forEach(r=>{
     const varDays=restockVarianceDays(r);
