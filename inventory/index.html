@@ -413,15 +413,15 @@ const ITEM_RESTOCKS=[
 ];
 
 const START=new Date(2026,4,5); // May 5
-// 240 = Dec 31, 2026; extended to 299 = Feb 28, 2027 so the Smartbuds chart
-// can show Jan/Feb 2027 too (see DIRECT_UNITS_SOLD below, which carries
-// Dec's rate flat through those two months — no real data or new rate
-// guidance exists for them yet).
-const END_DAY=299;
+// 240 = Dec 31, 2026; extended to 330 = Mar 31, 2027 so the Smartbuds
+// chart can show Jan-Mar 2027 too (see DIRECT_UNITS_SOLD below, which
+// carries Dec's rate flat through those three months — no real data or
+// new rate guidance exists for them yet).
+const END_DAY=330;
 
 // Smartbuds daily sales projection (Direct Units), day-indexed from START
-// (day 0 = May 5, 2026) through day 299 (Feb 28, 2027).
-const DIRECT_UNITS_SOLD=[16,23,18,21,22,40,19,11,9,15,51,25,28,21,19,19,32,42,34,34,52,20,24,8,25,14,21,32,43,17,36,22,22,43,29,19,22,20,23,20,22,21,34,48,39,27,27,43,23,27,27,27,27,27,27,27,27,27,27,27,27,27,27,27,27,27,27,27,27,27,27,27,27,27,27,27,27,27,27,27,27,27,27,27,27,27,27,27,29,29,29,29,29,29,29,29,29,29,29,29,29,29,29,29,29,29,29,29,29,21,21,21,21,21,21,21,21,21,21,22,22,22,22,22,22,22,22,22,22,22,22,22,22,22,22,22,22,22,22,22,22,22,22,22,22,22,22,22,22,21,21,21,21,21,21,21,21,21,21,21,21,21,21,21,21,21,21,21,21,21,21,21,21,21,21,21,21,21,21,21,22,22,22,22,22,22,22,22,22,22,22,22,22,22,22,22,22,22,22,22,22,22,22,22,22,22,22,22,22,22,21,21,21,21,21,21,21,21,21,21,21,21,21,21,21,21,21,21,21,21,21,21,21,21,21,21,21,21,21,21,21,21,21,21,21,21,21,21,21,21,21,21,21,21,21,21,21,21,21,21,21,21,21,21,21,21,21,21,21,21,21,21,21,21,21,21,21,21,21,21,21,21,21,21,21,21,21,21,21,21,21,21,21,21,21,21,21,21,21,21];
+// (day 0 = May 5, 2026) through day 330 (Mar 31, 2027).
+const DIRECT_UNITS_SOLD=[16,23,18,21,22,40,19,11,9,15,51,25,28,21,19,19,32,42,34,34,52,20,24,8,25,14,21,32,43,17,36,22,22,43,29,19,22,20,23,20,22,21,34,48,39,27,27,43,23,27,27,27,27,27,27,27,27,27,27,27,27,27,27,27,27,27,27,27,27,27,27,27,27,27,27,27,27,27,27,27,27,27,27,27,27,27,27,27,29,29,29,29,29,29,29,29,29,29,29,29,29,29,29,29,29,29,29,29,29,21,21,21,21,21,21,21,21,21,21,22,22,22,22,22,22,22,22,22,22,22,22,22,22,22,22,22,22,22,22,22,22,22,22,22,22,22,22,22,22,21,21,21,21,21,21,21,21,21,21,21,21,21,21,21,21,21,21,21,21,21,21,21,21,21,21,21,21,21,21,21,22,22,22,22,22,22,22,22,22,22,22,22,22,22,22,22,22,22,22,22,22,22,22,22,22,22,22,22,22,22,21,21,21,21,21,21,21,21,21,21,21,21,21,21,21,21,21,21,21,21,21,21,21,21,21,21,21,21,21,21,21,21,21,21,21,21,21,21,21,21,21,21,21,21,21,21,21,21,21,21,21,21,21,21,21,21,21,21,21,21,21,21,21,21,21,21,21,21,21,21,21,21,21,21,21,21,21,21,21,21,21,21,21,21,21,21,21,21,21,21,21,21,21,21,21,21,21,21,21,21,21,21,21,21,21,21,21,21,21,21,21,21,21,21,21,21,21,21,21,21,21];
 
 
 const MONTHS=[
@@ -447,14 +447,15 @@ function monthRange(year,monthIdx0){
 // START epoch. Computed rather than hand-written to avoid arithmetic slips.
 const MONTHS_TX=[2,3,4,5,6,7,8,9,10,11].map(m=>({name:MONTH_NAMES[m],...monthRange(2026,m)}));
 
-// Extend the Smartbuds chart's selectable range into Jan/Feb 2027 — beyond
-// END_DAY's original Dec 31, 2026 cutoff (see DIRECT_UNITS_SOLD/END_DAY
-// above, which carry the Dec rate flat forward through these two months
-// since there's no real data or new rate
-// guidance for them yet). Kept as separate .push() calls (not folded into
-// the literal above) so the original 8-month 2026 array stays easy to read.
+// Extend the Smartbuds chart's selectable range into Jan-Mar 2027 —
+// beyond END_DAY's original Dec 31, 2026 cutoff (see DIRECT_UNITS_SOLD/
+// END_DAY above, which carry the Dec rate flat forward through these
+// three months since there's no real data or new rate guidance for them
+// yet). Kept as separate .push() calls (not folded into the literal
+// above) so the original 8-month 2026 array stays easy to read.
 MONTHS.push({name:'Jan', ...monthRange(2027,0)});
 MONTHS.push({name:'Feb', ...monthRange(2027,1)});
+MONTHS.push({name:'Mar', ...monthRange(2027,2)});
 
 function hexToRgba(hex,alpha){
   const h=hex.replace('#','');
@@ -464,13 +465,14 @@ function hexToRgba(hex,alpha){
 
 let viewStart=0, viewEnd=8; // May through Jan by default; "Full range" extends through Feb
 let showDirect=true;
-// plannedDate = the originally committed ship date, fixed once set.
-// date = current best-known date: for pending restocks this tracks the
-// plan (kept equal to plannedDate until shipped), for actual:true
-// restocks this is the real ship date. A difference between the two is
-// the schedule variance shown in the dashboard/email. No historical
-// record of pre-slip plan dates exists for the 3 already-shipped MP3
-// restocks below, so they start at zero variance (plannedDate===date).
+// plannedDate = the originally committed ship date, set once at creation
+// and never auto-updated afterward, shipped or not. date = current
+// best-known date (moves whenever the schedule changes). Any gap between
+// the two is the schedule variance shown in the dashboard/email -- so
+// moving a restock's date, even one that hasn't shipped yet, immediately
+// registers as variance. No historical record of pre-slip plan dates
+// exists for the 3 already-shipped MP3 restocks below, so they start at
+// zero variance (plannedDate===date).
 let restocks=[
   {date:'2026-05-27', plannedDate:'2026-05-27', units:240, product:'MP3'},
   {date:'2026-06-12', plannedDate:'2026-06-12', units:400, product:'MP3'},
@@ -605,13 +607,12 @@ function renderRestockRows(){
     el.addEventListener('change',()=>{restocks[+el.dataset.idx].product=el.value;renderRestockRows();update();}));
   c.querySelectorAll('input[type=date]').forEach(el=>
     el.addEventListener('change',()=>{
-      const r=restocks[+el.dataset.idx];
-      r.date=el.value;
-      // Editing the date on a not-yet-shipped restock is a plan change,
-      // not a slip -- keep plannedDate in lockstep so it doesn't register
-      // as variance. Once actual, date represents the real ship date, so
-      // plannedDate stays fixed and any difference IS the variance.
-      if(!r.actual) r.plannedDate=el.value;
+      // plannedDate is set once (at creation) and never auto-synced again,
+      // whether or not the restock has shipped yet -- so moving a pending
+      // restock's date (e.g. MP4 restocks still in planning) always shows
+      // up as schedule variance immediately, same as editing an already-
+      // shipped restock's date.
+      restocks[+el.dataset.idx].date=el.value;
       renderRestockRows();update();
     }));
   c.querySelectorAll('input[type=number]').forEach(el=>
