@@ -8,14 +8,14 @@
         "sku": "NSSB0100-ZW",
         "available": 0,
         "committed": 0,
-        "backorder": 704
+        "backorder": 707
       },
       {
         "key": "tipsS",
         "name": "Tips — Small",
         "sku": "NSEMTA0201C-W",
-        "available": 2632,
-        "committed": 136,
+        "available": 2626,
+        "committed": 142,
         "backorder": 0
       },
       {
@@ -40,7 +40,7 @@
         "sku": "NSEMWZ0103T-W",
         "available": 0,
         "committed": 0,
-        "backorder": 311
+        "backorder": 317
       },
       {
         "key": "wingsM",
@@ -324,7 +324,7 @@
     {
       "date": "2026-09-01",
       "day": 119,
-      "balance": -704
+      "balance": -707
     }
   ],
   "itemHistory": {
@@ -537,7 +537,7 @@
       {
         "date": "2026-09-01",
         "day": 119,
-        "balance": 2632
+        "balance": 2626
       }
     ],
     "tipsM": [
@@ -1173,7 +1173,7 @@
       {
         "date": "2026-09-01",
         "day": 119,
-        "balance": -311
+        "balance": -317
       }
     ],
     "wingsM": [
@@ -1601,5 +1601,5 @@
       }
     ]
   },
-  "lastRefreshed": "2026-09-01T16:03:13.337Z"
+  "lastRefreshed": "2026-09-01T19:22:12.749Z"
 }
