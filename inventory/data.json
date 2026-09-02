@@ -8,7 +8,7 @@
         "sku": "NSSB0100-ZW",
         "available": 0,
         "committed": 0,
-        "backorder": 710
+        "backorder": 711
       },
       {
         "key": "tipsS",
@@ -329,7 +329,7 @@
     {
       "date": "2026-09-02",
       "day": 120,
-      "balance": -710
+      "balance": -711
     }
   ],
   "itemHistory": {
@@ -1636,5 +1636,5 @@
       }
     ]
   },
-  "lastRefreshed": "2026-09-02T16:03:16.007Z"
+  "lastRefreshed": "2026-09-02T19:22:03.175Z"
 }
