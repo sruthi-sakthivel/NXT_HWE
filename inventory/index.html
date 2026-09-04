@@ -480,14 +480,17 @@ let restocks=[
   {date:'2026-07-06', plannedDate:'2026-07-06', units:480, actual:true, product:'MP3'},
   {date:'2026-07-09', plannedDate:'2026-07-09', units:240, actual:true, product:'MP3'},
   {date:'2026-07-13', plannedDate:'2026-07-13', units:480, actual:true, product:'MP3'},
-  {date:'2026-09-09', plannedDate:'2026-07-31', units:247, product:'MP3'},
-  {date:'2026-09-25', plannedDate:'2026-09-09', units:1280, product:'MP4'},
+  {date:'2026-09-09', plannedDate:'2026-07-31', units:160, product:'MP3'},
+  {tbd:true, units:0, product:'MP3'},
+  {date:'2026-09-24', plannedDate:'2026-09-09', units:400, product:'MP4'},
+  {date:'2026-09-30', plannedDate:'2026-09-09', units:400, product:'MP4'},
   {date:'2026-10-16', plannedDate:'2026-09-30', units:1280, product:'MP4'},
   {date:'2026-11-06', plannedDate:'2026-10-21', units:1280, product:'MP4'},
   {date:'2026-11-27', plannedDate:'2026-11-11', units:1280, product:'MP4'},
 ];
 
 function restockVarianceDays(r){
+  if(r.tbd) return 0; // no date yet -- nothing to compare against
   const planned=r.plannedDate||r.date;
   if(planned===r.date) return 0;
   return daysBetween(parseDate(planned), parseDate(r.date));
@@ -584,10 +587,25 @@ document.getElementById('selTxEnd').onchange=function(){
 function renderRestockRows(){
   const c=document.getElementById('restockRows');
   c.innerHTML=restocks.map((r,i)=>{
-    const day=daysBetween(START,parseDate(r.date));
-    const isActual=r.actual===true||day<=ACTUAL_END;
     const product=r.product||'MP3';
     const color=PRODUCT_COLOR[product];
+    if(r.tbd){
+      // No real date yet -- render a plain "Date TBD" label instead of a
+      // date input (nothing valid to parse), and skip variance entirely
+      // (there's nothing to compare a TBD date against).
+      return `<div class="re-row">
+        <select class="re-product" data-idx="${i}" style="border:1px solid ${color}55;background:${color}18;color:${color};">
+          <option value="MP3" ${product==='MP3'?'selected':''}>MP3</option>
+          <option value="MP4" ${product==='MP4'?'selected':''}>MP4</option>
+        </select>
+        <span style="font-size:11px;font-style:italic;color:#888780;">Date TBD</span>
+        <input type="number" value="${r.units}" min="0" step="50" style="width:70px;text-align:right;" data-idx="${i}"/>
+        <span></span>
+        <button class="btn-remove" data-remove="${i}">&times;</button>
+      </div>`;
+    }
+    const day=daysBetween(START,parseDate(r.date));
+    const isActual=r.actual===true||day<=ACTUAL_END;
     const varDays=restockVarianceDays(r);
     const varianceHtml=varDays!==0?(()=>{
       const v=fmtVariance(varDays);
@@ -623,7 +641,10 @@ function renderRestockRows(){
 }
 
 document.getElementById('btnAdd').addEventListener('click',()=>{
-  const last=restocks.length>0?parseDate(restocks[restocks.length-1].date):new Date(2026,8,1);
+  // Skip back past any trailing TBD entries (no date to anchor off of)
+  // to find the last restock that actually has one.
+  const dated=[...restocks].reverse().find(r=>!r.tbd);
+  const last=dated?parseDate(dated.date):new Date(2026,8,1);
   const next=new Date(last.getTime()+30*86400000);
   const d=next.toISOString().slice(0,10);
   restocks.push({date:d,plannedDate:d,units:500,product:'MP4'});
@@ -635,6 +656,7 @@ document.getElementById('btnAdd').addEventListener('click',()=>{
 function calcScenario(soldArray){
   const restockMap={};
   restocks.forEach(r=>{
+    if(r.tbd) return; // no date yet -- can't place it on the timeline
     const d=daysBetween(START,parseDate(r.date));
     if(d>ACTUAL_END) restockMap[d]=(restockMap[d]||0)+r.units;
   });
@@ -672,8 +694,11 @@ function calcScenario(soldArray){
   // restocks landing on the same date still show as distinct, correctly
   // colored pills instead of a combined number.
   const restockMarkers=restocks
+    .filter(r=>!r.tbd)
     .map(r=>({day:daysBetween(START,parseDate(r.date)),units:r.units,product:r.product||'MP3'}))
     .filter(m=>m.day>=0&&m.day<=END_DAY);
+  // totalRestocked intentionally still counts TBD units -- they're
+  // committed inventory, just without a firm arrival date yet.
   return{values,rawValues,zones,restockMarkers,totalRestocked:restocks.reduce((s,r)=>s+r.units,0),lastsThruDay,minStock};
 }
 
@@ -1372,6 +1397,7 @@ function buildEmailModel(){
 
   // Next literal restock event (from restocks list), independent of flips
   const futureRestocks=restocks
+    .filter(r=>!r.tbd)
     .map(r=>({...r,dayNum:daysBetween(START,parseDate(r.date))}))
     .filter(r=>r.dayNum>TODAY_DAY)
     .sort((a,b)=>a.dayNum-b.dayNum);
@@ -1391,6 +1417,8 @@ function buildEmailModel(){
 }
 
 // Batch/source info for each restock, in restock 1–6 order (from AUT/Melody records)
+// Positionally aligned 1:1 with restocks above -- keep in sync whenever
+// restocks entries are added, removed, split, or reordered.
 const RESTOCK_BATCH_INFO=[
   {batch:'TPU_240', source:'Melody-AUT'},
   {batch:'TPU_400', source:'Melody-AUT'},
@@ -1398,20 +1426,24 @@ const RESTOCK_BATCH_INFO=[
   {batch:'CS_240',  source:'Melody-AUT'},
   {batch:'CS_480',  source:'Melody-AUT'},
   {batch:'CS_400',  source:'Melody-AUT'},
-  {batch:'CS_1280', source:'Melody-AUT'},
+  {batch:'',        source:''},
+  {batch:'CS_400',  source:'Melody-AUT'},
+  {batch:'CS_400',  source:'Melody-AUT'},
   {batch:'CS_1280', source:'Melody-AUT'},
   {batch:'CS_1280', source:'Melody-AUT'},
   {batch:'CS_1280', source:'Melody-AUT'},
 ];
 
 function initDeliveryRows(){
-  // seed from full restocks list (past and future) so nothing gets dropped
+  // seed from full restocks list (past and future) so nothing gets dropped.
+  // TBD restocks have no r.date to parse -- sort them to the very end
+  // (Infinity) and skip deliveryStatus(), which would otherwise throw.
   deliveryRows=restocks
-    .map((r,i)=>({date:r.date,plannedDate:r.plannedDate||r.date,units:r.units,product:r.product||'MP3',delayReason:r.delayReason||'',dayNum:daysBetween(START,parseDate(r.date)),origIdx:i}))
+    .map((r,i)=>({date:r.date,plannedDate:r.plannedDate||r.date,units:r.units,product:r.product||'MP3',delayReason:r.delayReason||'',tbd:!!r.tbd,dayNum:r.tbd?Infinity:daysBetween(START,parseDate(r.date)),origIdx:i}))
     .sort((a,b)=>a.dayNum-b.dayNum)
     .map(r=>{
       const info=RESTOCK_BATCH_INFO[r.origIdx]||{batch:'',source:''};
-      return{date:r.date,plannedDate:r.plannedDate,units:r.units,product:r.product,delayReason:r.delayReason,batch:info.batch,source:info.source,status:deliveryStatus(r.date),origIdx:r.origIdx};
+      return{date:r.date,plannedDate:r.plannedDate,units:r.units,product:r.product,delayReason:r.delayReason,tbd:r.tbd,batch:info.batch,source:info.source,status:r.tbd?'TBD':deliveryStatus(r.date),origIdx:r.origIdx};
     });
 }
 
@@ -1441,16 +1473,19 @@ function renderDeliveryRows(){
       const reasonRow=varDays!==0?`<div style="grid-column:1/-1;margin:-2px 0 6px;">
         <input type="text" data-idx="${i}" data-field="delayReason" value="${(r.delayReason||'').replace(/"/g,'&quot;')}" placeholder="Note about this schedule change (optional — included in the email)" style="font-size:11px;padding:5px 7px;border-radius:6px;border:1px solid rgba(0,0,0,0.12);background:#f5f4f0;width:100%;"/>
       </div>`:'';
+      const statusCell=r.tbd
+        ?`<div class="dr-static" style="font-style:italic;color:#888780;">TBD</div>`
+        :`<select data-idx="${i}" data-field="status" style="font-size:11px;padding:4px 4px;border-radius:6px;border:1px solid rgba(0,0,0,0.12);background:#f5f4f0;color:${statusColor};font-weight:600;">
+        <option value="Received" ${r.status==='Received'?'selected':''}>Received</option>
+        <option value="Expected" ${r.status==='Expected'?'selected':''}>Expected</option>
+      </select>`;
       return `<div class="deliv-row">
-      <div class="dr-static">${r.date}</div>
+      <div class="dr-static" style="${r.tbd?'font-style:italic;color:#888780;':''}">${r.tbd?'TBD':r.date}</div>
       <select data-idx="${i}" data-field="product" class="re-product" style="border:1px solid ${pColor}55;background:${pColor}18;color:${pColor};">
         <option value="MP3" ${product==='MP3'?'selected':''}>MP3</option>
         <option value="MP4" ${product==='MP4'?'selected':''}>MP4</option>
       </select>
-      <select data-idx="${i}" data-field="status" style="font-size:11px;padding:4px 4px;border-radius:6px;border:1px solid rgba(0,0,0,0.12);background:#f5f4f0;color:${statusColor};font-weight:600;">
-        <option value="Received" ${r.status==='Received'?'selected':''}>Received</option>
-        <option value="Expected" ${r.status==='Expected'?'selected':''}>Expected</option>
-      </select>
+      ${statusCell}
       <div class="dr-static">${r.units.toLocaleString()}</div>
       ${varianceHtml}
       <input type="text" data-idx="${i}" data-field="batch" value="${r.batch.replace(/"/g,'&quot;')}"/>
@@ -1512,7 +1547,7 @@ function renderEmailPreview(){
       return `<span style="display:inline-block;padding:2px 8px;border-radius:10px;font-weight:700;color:${v.color};background:${v.bg};">${v.text}</span>`;
     })():'';
     return `<tr>
-      <td style="color:${PRODUCT_COLOR[product]};font-weight:700;">${product}</td><td>${r.date}</td><td style="color:${statusColor};font-weight:600;">${status}</td><td>${r.units.toLocaleString()}</td><td>${varianceHtml}</td><td>${r.batch||'—'}</td><td>${r.source||'—'}</td>
+      <td style="color:${PRODUCT_COLOR[product]};font-weight:700;">${product}</td><td>${r.tbd?'TBD':r.date}</td><td style="color:${statusColor};font-weight:600;">${status}</td><td>${r.units.toLocaleString()}</td><td>${varianceHtml}</td><td>${r.batch||'—'}</td><td>${r.source||'—'}</td>
     </tr>`;
   }).join('');
   const delayNotes=deliveryRows.filter(r=>r.delayReason&&r.delayReason.trim()).map(r=>
@@ -1573,7 +1608,7 @@ function buildEmailPlainText(){
   deliveryRows.forEach(r=>{
     const varDays=restockVarianceDays(r);
     const varText=varDays!==0?fmtVariance(varDays).text:'—';
-    t+=`${r.product||'MP3'}\t${r.date}\t${r.status}\t${r.units.toLocaleString()}\t${varText}\t${r.batch||'—'}\t${r.source||'—'}\n`;
+    t+=`${r.product||'MP3'}\t${r.tbd?'TBD':r.date}\t${r.status}\t${r.units.toLocaleString()}\t${varText}\t${r.batch||'—'}\t${r.source||'—'}\n`;
   });
   const delayNotesText=deliveryRows.filter(r=>r.delayReason&&r.delayReason.trim()).map(r=>`- ${r.product||'MP3'} ${r.date}: ${r.delayReason}`).join('\n');
   if(delayNotesText) t+=`\n📝 Schedule notes\n${delayNotesText}\n`;
