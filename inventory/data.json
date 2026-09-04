@@ -1,6 +1,6 @@
 {
   "liveStock": {
-    "fetchedAt": "Sep 3, 2026",
+    "fetchedAt": "Sep 4, 2026",
     "items": [
       {
         "key": "earbuds",
@@ -8,7 +8,7 @@
         "sku": "NSSB0100-ZW",
         "available": 0,
         "committed": 0,
-        "backorder": 718
+        "backorder": 731
       },
       {
         "key": "tipsS",
@@ -335,6 +335,11 @@
       "date": "2026-09-03",
       "day": 121,
       "balance": -718
+    },
+    {
+      "date": "2026-09-04",
+      "day": 122,
+      "balance": -731
     }
   ],
   "itemHistory": {
@@ -558,6 +563,11 @@
         "date": "2026-09-03",
         "day": 121,
         "balance": 2632
+      },
+      {
+        "date": "2026-09-04",
+        "day": 122,
+        "balance": 2632
       }
     ],
     "tipsM": [
@@ -779,6 +789,11 @@
       {
         "date": "2026-09-03",
         "day": 121,
+        "balance": 1127
+      },
+      {
+        "date": "2026-09-04",
+        "day": 122,
         "balance": 1127
       }
     ],
@@ -1002,6 +1017,11 @@
         "date": "2026-09-03",
         "day": 121,
         "balance": 1380
+      },
+      {
+        "date": "2026-09-04",
+        "day": 122,
+        "balance": 1380
       }
     ],
     "wingsS": [
@@ -1223,6 +1243,11 @@
       {
         "date": "2026-09-03",
         "day": 121,
+        "balance": -335
+      },
+      {
+        "date": "2026-09-04",
+        "day": 122,
         "balance": -335
       }
     ],
@@ -1446,6 +1471,11 @@
         "date": "2026-09-03",
         "day": 121,
         "balance": 871
+      },
+      {
+        "date": "2026-09-04",
+        "day": 122,
+        "balance": 871
       }
     ],
     "wingsL": [
@@ -1668,8 +1698,13 @@
         "date": "2026-09-03",
         "day": 121,
         "balance": 434
+      },
+      {
+        "date": "2026-09-04",
+        "day": 122,
+        "balance": 434
       }
     ]
   },
-  "lastRefreshed": "2026-09-03T19:16:43.399Z"
+  "lastRefreshed": "2026-09-04T16:03:14.630Z"
 }
