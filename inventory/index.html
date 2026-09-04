@@ -480,8 +480,8 @@ let restocks=[
   {date:'2026-07-06', plannedDate:'2026-07-06', units:480, actual:true, product:'MP3'},
   {date:'2026-07-09', plannedDate:'2026-07-09', units:240, actual:true, product:'MP3'},
   {date:'2026-07-13', plannedDate:'2026-07-13', units:480, actual:true, product:'MP3'},
-  {date:'2026-09-09', plannedDate:'2026-07-31', units:160, product:'MP3'},
-  {date:'2026-09-18', plannedDate:'2026-07-31', units:80, product:'MP3'},
+  {date:'2026-09-09', plannedDate:'2026-07-31', units:160, product:'MP3', status:'Shipped'},
+  {date:'2026-09-16', plannedDate:'2026-07-31', units:80, product:'MP3'},
   {date:'2026-10-01', plannedDate:'2026-09-09', units:400, product:'MP4'},
   {date:'2026-10-07', plannedDate:'2026-09-09', units:400, product:'MP4'},
   {date:'2026-10-30', plannedDate:'2026-09-30', units:1280, product:'MP4'},
@@ -1439,11 +1439,15 @@ function initDeliveryRows(){
   // TBD restocks have no r.date to parse -- sort them to the very end
   // (Infinity) and skip deliveryStatus(), which would otherwise throw.
   deliveryRows=restocks
-    .map((r,i)=>({date:r.date,plannedDate:r.plannedDate||r.date,units:r.units,product:r.product||'MP3',delayReason:r.delayReason||'',tbd:!!r.tbd,dayNum:r.tbd?Infinity:daysBetween(START,parseDate(r.date)),origIdx:i}))
+    .map((r,i)=>({date:r.date,plannedDate:r.plannedDate||r.date,units:r.units,product:r.product||'MP3',delayReason:r.delayReason||'',statusOverride:r.status,tbd:!!r.tbd,dayNum:r.tbd?Infinity:daysBetween(START,parseDate(r.date)),origIdx:i}))
     .sort((a,b)=>a.dayNum-b.dayNum)
     .map(r=>{
       const info=RESTOCK_BATCH_INFO[r.origIdx]||{batch:'',source:''};
-      return{date:r.date,plannedDate:r.plannedDate,units:r.units,product:r.product,delayReason:r.delayReason,tbd:r.tbd,batch:info.batch,source:info.source,status:r.tbd?'TBD':deliveryStatus(r.date),origIdx:r.origIdx};
+      // A restock's own explicit status (e.g. 'Shipped', set directly in
+      // the data when it's known to be in transit ahead of its arrival
+      // date) always wins over the date-based Received/Expected guess.
+      const status=r.tbd?'TBD':(r.statusOverride||deliveryStatus(r.date));
+      return{date:r.date,plannedDate:r.plannedDate,units:r.units,product:r.product,delayReason:r.delayReason,tbd:r.tbd,batch:info.batch,source:info.source,status,origIdx:r.origIdx};
     });
 }
 
@@ -1460,7 +1464,7 @@ function renderDeliveryRows(){
       <div></div>
     </div>`+
     deliveryRows.map((r,i)=>{
-      const statusColor=r.status==='Received'?'#1D9E75':'#5F5E5A';
+      const statusColor=(r.status==='Received'||r.status==='Shipped')?'#1D9E75':'#5F5E5A';
       const product=r.product||'MP3';
       const pColor=PRODUCT_COLOR[product];
       const varDays=restockVarianceDays(r);
@@ -1476,8 +1480,9 @@ function renderDeliveryRows(){
       const statusCell=r.tbd
         ?`<div class="dr-static" style="font-style:italic;color:#888780;">TBD</div>`
         :`<select data-idx="${i}" data-field="status" style="font-size:11px;padding:4px 4px;border-radius:6px;border:1px solid rgba(0,0,0,0.12);background:#f5f4f0;color:${statusColor};font-weight:600;">
-        <option value="Received" ${r.status==='Received'?'selected':''}>Received</option>
         <option value="Expected" ${r.status==='Expected'?'selected':''}>Expected</option>
+        <option value="Shipped" ${r.status==='Shipped'?'selected':''}>Shipped</option>
+        <option value="Received" ${r.status==='Received'?'selected':''}>Received</option>
       </select>`;
       return `<div class="deliv-row">
       <div class="dr-static" style="${r.tbd?'font-style:italic;color:#888780;':''}">${r.tbd?'TBD':r.date}</div>
@@ -1507,7 +1512,12 @@ function renderDeliveryRows(){
     }));
   c.querySelectorAll('select[data-field=status]').forEach(el=>
     el.addEventListener('change',()=>{
-      deliveryRows[+el.dataset.idx].status=el.value;
+      const idx=+el.dataset.idx;
+      deliveryRows[idx].status=el.value;
+      // Persist back onto the source restock, same as delayReason, so a
+      // manual status override sticks around next time this modal opens.
+      const origIdx=deliveryRows[idx].origIdx;
+      if(restocks[origIdx]) restocks[origIdx].status=el.value;
       renderDeliveryRows();
       renderEmailPreview();
     }));
@@ -1539,7 +1549,7 @@ function renderEmailPreview(){
     </tr>`).join('');
   const delivRowsHtml=deliveryRows.map(r=>{
     const status=r.status;
-    const statusColor=status==='Received'?'#1D9E75':'#5F5E5A';
+    const statusColor=(status==='Received'||status==='Shipped')?'#1D9E75':'#5F5E5A';
     const product=r.product||'MP3';
     const varDays=restockVarianceDays(r);
     const varianceHtml=varDays!==0?(()=>{
@@ -1567,7 +1577,7 @@ function renderEmailPreview(){
       <tr><td>On-hand inventory</td><td>${m.onHand.toLocaleString()}</td></tr>
       <tr><td>Paid orders awaiting shipment</td><td>${m.paidOrders.toLocaleString()}</td></tr>
       <tr><td>Sales run rate</td><td>${m.salesRate.rate} ${m.salesRate.label}</td></tr>
-      <tr><td>Next restock</td><td>${m.nextRestockDate}</td></tr>
+      <tr><td>Next restock</td><td><span style="background:rgba(29,158,117,0.18);color:#1D9E75;font-weight:700;padding:2px 8px;border-radius:10px;">${m.nextRestockDate}</span></td></tr>
       <tr><td>${m.nextSellOutLabel}</td><td>${m.nextSellOut}</td></tr>
     </table>
     <div class="ep-section-title">🔌 Live stock — Rush Order (as of ${LIVE_STOCK.fetchedAt})</div>
