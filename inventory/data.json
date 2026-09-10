@@ -8,7 +8,7 @@
         "sku": "NSSB0100-ZW",
         "available": 0,
         "committed": 0,
-        "backorder": 675
+        "backorder": 676
       },
       {
         "key": "tipsS",
@@ -22,8 +22,8 @@
         "key": "tipsM",
         "name": "Tips — Medium",
         "sku": "NSEMTB0201C-W",
-        "available": 1088,
-        "committed": 99,
+        "available": 1076,
+        "committed": 111,
         "backorder": 0
       },
       {
@@ -46,8 +46,8 @@
         "key": "wingsM",
         "name": "Sleeves — Medium",
         "sku": "NSEMWY0303T-W",
-        "available": 827,
-        "committed": 1,
+        "available": 815,
+        "committed": 13,
         "backorder": 0
       },
       {
@@ -369,7 +369,7 @@
     {
       "date": "2026-09-10",
       "day": 128,
-      "balance": -675
+      "balance": -676
     }
   ],
   "itemHistory": {
@@ -884,7 +884,7 @@
       {
         "date": "2026-09-10",
         "day": 128,
-        "balance": 1088
+        "balance": 1076
       }
     ],
     "tipsL": [
@@ -1655,7 +1655,7 @@
       {
         "date": "2026-09-10",
         "day": 128,
-        "balance": 827
+        "balance": 815
       }
     ],
     "wingsL": [
@@ -1916,5 +1916,5 @@
       }
     ]
   },
-  "lastRefreshed": "2026-09-10T16:03:25.679Z"
+  "lastRefreshed": "2026-09-10T19:06:23.057Z"
 }
