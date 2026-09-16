@@ -14,8 +14,8 @@
         "key": "tipsS",
         "name": "Tips — Small",
         "sku": "NSEMTA0201C-W",
-        "available": 2606,
-        "committed": 148,
+        "available": 2600,
+        "committed": 154,
         "backorder": 0
       },
       {
@@ -30,8 +30,8 @@
         "key": "tipsL",
         "name": "Tips — Large",
         "sku": "NSEMTC0201C-W",
-        "available": 1350,
-        "committed": 43,
+        "available": 1344,
+        "committed": 49,
         "backorder": 0
       },
       {
@@ -40,7 +40,7 @@
         "sku": "NSEMWZ0103T-W",
         "available": 0,
         "committed": 0,
-        "backorder": 332
+        "backorder": 338
       },
       {
         "key": "wingsM",
@@ -54,8 +54,8 @@
         "key": "wingsL",
         "name": "Sleeves — Large",
         "sku": "NSEMWX0103T-W",
-        "available": 380,
-        "committed": 0,
+        "available": 374,
+        "committed": 6,
         "backorder": 0
       }
     ]
@@ -687,7 +687,7 @@
       {
         "date": "2026-09-16",
         "day": 134,
-        "balance": 2606
+        "balance": 2600
       }
     ],
     "tipsM": [
@@ -1261,7 +1261,7 @@
       {
         "date": "2026-09-16",
         "day": 134,
-        "balance": 1350
+        "balance": 1344
       }
     ],
     "wingsS": [
@@ -1548,7 +1548,7 @@
       {
         "date": "2026-09-16",
         "day": 134,
-        "balance": -332
+        "balance": -338
       }
     ],
     "wingsM": [
@@ -2122,9 +2122,9 @@
       {
         "date": "2026-09-16",
         "day": 134,
-        "balance": 380
+        "balance": 374
       }
     ]
   },
-  "lastRefreshed": "2026-09-16T16:03:14.697Z"
+  "lastRefreshed": "2026-09-16T19:31:51.769Z"
 }
