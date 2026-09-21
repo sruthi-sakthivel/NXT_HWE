@@ -8,7 +8,7 @@
         "sku": "NSSB0100-ZW",
         "available": 0,
         "committed": 0,
-        "backorder": 782
+        "backorder": 785
       },
       {
         "key": "tipsS",
@@ -23,7 +23,7 @@
         "name": "Tips — Medium",
         "sku": "NSEMTB0201C-W",
         "available": 998,
-        "committed": 123,
+        "committed": 111,
         "backorder": 0
       },
       {
@@ -47,7 +47,7 @@
         "name": "Sleeves — Medium",
         "sku": "NSEMWY0303T-W",
         "available": 743,
-        "committed": 25,
+        "committed": 13,
         "backorder": 0
       },
       {
@@ -424,7 +424,7 @@
     {
       "date": "2026-09-21",
       "day": 139,
-      "balance": -782
+      "balance": -785
     }
   ],
   "itemHistory": {
@@ -2301,5 +2301,5 @@
       }
     ]
   },
-  "lastRefreshed": "2026-09-21T16:03:14.290Z"
+  "lastRefreshed": "2026-09-21T20:24:19.900Z"
 }
