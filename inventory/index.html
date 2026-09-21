@@ -469,8 +469,8 @@ function hexToRgba(hex,alpha){
 function darkenHex(hex,amount){
   const h=hex.replace('#','');
   const r=parseInt(h.substring(0,2),16),g=parseInt(h.substring(2,4),16),b=parseInt(h.substring(4,6),16);
-  const d=v=>Math.round(v*(1-amount));
-  return `rgb(${d(r)},${d(g)},${d(b)})`;
+  const d=v=>Math.round(v*(1-amount)).toString(16).padStart(2,'0');
+  return `#${d(r)}${d(g)}${d(b)}`;
 }
 
 let viewStart=0, viewEnd=8; // May through Jan by default; "Full range" extends through Feb
@@ -619,8 +619,11 @@ function renderRestockRows(){
       const v=fmtVariance(varDays);
       return `<span class="re-variance" style="color:${v.color};background:${v.bg};" title="Planned: ${r.plannedDate}">${v.text}</span>`;
     })():'';
+    // Received restocks get a darkened product badge -- a quiet "done"
+    // signal in the editor list too, matching the darkened chart pill.
+    const badgeColor=r.status==='Received'?darkenHex(color,0.35):color;
     return `<div class="re-row">
-      <select class="re-product" data-idx="${i}" style="border:1px solid ${color}55;background:${color}18;color:${color};">
+      <select class="re-product" data-idx="${i}" title="${r.status==='Received'?'Received':''}" style="border:1px solid ${badgeColor}55;background:${badgeColor}18;color:${badgeColor};">
         <option value="MP3" ${product==='MP3'?'selected':''}>MP3</option>
         <option value="MP4" ${product==='MP4'?'selected':''}>MP4</option>
       </select>
