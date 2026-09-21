@@ -463,6 +463,15 @@ function hexToRgba(hex,alpha){
   const r=parseInt(h.substring(0,2),16),g=parseInt(h.substring(2,4),16),b=parseInt(h.substring(4,6),16);
   return `rgba(${r},${g},${b},${alpha})`;
 }
+// Darkens a hex color toward black by `amount` (0-1) -- used to visually
+// mute completed/received restock pills so they read as "done" without
+// losing their product-color identity (still green/purple, just deeper).
+function darkenHex(hex,amount){
+  const h=hex.replace('#','');
+  const r=parseInt(h.substring(0,2),16),g=parseInt(h.substring(2,4),16),b=parseInt(h.substring(4,6),16);
+  const d=v=>Math.round(v*(1-amount));
+  return `rgb(${d(r)},${d(g)},${d(b)})`;
+}
 
 let viewStart=0, viewEnd=8; // May through Jan by default; "Full range" extends through Feb
 let showDirect=true;
@@ -480,8 +489,7 @@ let restocks=[
   {date:'2026-07-06', plannedDate:'2026-07-06', units:480, actual:true, product:'MP3'},
   {date:'2026-07-09', plannedDate:'2026-07-09', units:240, actual:true, product:'MP3'},
   {date:'2026-07-13', plannedDate:'2026-07-13', units:480, actual:true, product:'MP3'},
-  {date:'2026-09-09', plannedDate:'2026-07-31', units:160, product:'MP3', status:'Shipped'},
-  {date:'2026-09-16', plannedDate:'2026-07-31', units:80, product:'MP3'},
+  {date:'2026-09-09', plannedDate:'2026-07-31', units:160, product:'MP3', status:'Received'},
   {date:'2026-10-01', plannedDate:'2026-09-09', units:400, product:'MP4'},
   {date:'2026-10-07', plannedDate:'2026-09-09', units:400, product:'MP4'},
   {date:'2026-10-30', plannedDate:'2026-09-30', units:1280, product:'MP4'},
@@ -695,7 +703,14 @@ function calcScenario(soldArray){
   // colored pills instead of a combined number.
   const restockMarkers=restocks
     .filter(r=>!r.tbd)
-    .map(r=>({day:daysBetween(START,parseDate(r.date)),units:r.units,product:r.product||'MP3'}))
+    .map(r=>{
+      const product=r.product||'MP3';
+      // Received restocks get a darkened version of their product color
+      // on the chart pill -- a quiet visual "done" signal, still green/
+      // purple so the product is still identifiable at a glance.
+      const color=r.status==='Received'?darkenHex(PRODUCT_COLOR[product]||'#1D9E75',0.35):undefined;
+      return{day:daysBetween(START,parseDate(r.date)),units:r.units,product,color};
+    })
     .filter(m=>m.day>=0&&m.day<=END_DAY);
   // totalRestocked intentionally still counts TBD units -- they're
   // committed inventory, just without a firm arrival date yet.
@@ -1426,7 +1441,6 @@ const RESTOCK_BATCH_INFO=[
   {batch:'CS_240',  source:'Melody-AUT'},
   {batch:'CS_480',  source:'Melody-AUT'},
   {batch:'CS_400',  source:'Melody-AUT'},
-  {batch:'',        source:''},
   {batch:'CS_400',  source:'Melody-AUT'},
   {batch:'CS_400',  source:'Melody-AUT'},
   {batch:'CS_1280', source:'Melody-AUT'},
