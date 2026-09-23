@@ -1586,7 +1586,7 @@ function renderEmailPreview(){
     <div style="font-size:10px;color:#888780;margin:-2px 0 6px;">Based on the Direct Units projection.</div>
     <table class="ep-tbl2"><tr><th>Date</th><th>Flips to</th><th style="text-align:right;">~Balance</th></tr>${timelineRows||'<tr><td colspan=3>No upcoming flips in projection window</td></tr>'}</table>
     <div class="ep-section-title">📦 Inbound deliveries</div>
-    <table class="ep-tbl2"><tr><th>Product</th><th>Date</th><th>Status</th><th>Qty</th><th>Variance</th><th>Batch</th><th>Remarks</th></tr>${delivRowsHtml||'<tr><td colspan=7>No deliveries in window</td></tr>'}</table>
+    <table class="ep-tbl2"><tr><th style="width:13%;">Product</th><th style="width:13%;">Date</th><th style="width:11%;">Status</th><th style="width:8%;">Qty</th><th style="width:9%;">Variance</th><th style="width:11%;">Batch</th><th>Remarks</th></tr>${delivRowsHtml||'<tr><td colspan=7>No deliveries in window</td></tr>'}</table>
     ${delayNotes?`<div class="ep-section-title">📝 Schedule notes</div><div style="font-size:11px;color:#5F5E5A;">${delayNotes}</div>`:''}
   `;
 }
