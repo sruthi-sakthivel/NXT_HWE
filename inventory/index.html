@@ -1460,7 +1460,7 @@ function renderDeliveryRows(){
       <div style="font-size:9px;color:#B4B2A9;text-transform:uppercase;">Qty</div>
       <div style="font-size:9px;color:#B4B2A9;text-transform:uppercase;">Sched. Var.</div>
       <div style="font-size:9px;color:#B4B2A9;text-transform:uppercase;">Batch</div>
-      <div style="font-size:9px;color:#B4B2A9;text-transform:uppercase;">Source</div>
+      <div style="font-size:9px;color:#B4B2A9;text-transform:uppercase;">Remarks</div>
       <div></div>
     </div>`+
     deliveryRows.map((r,i)=>{
@@ -1494,7 +1494,7 @@ function renderDeliveryRows(){
       <div class="dr-static">${r.units.toLocaleString()}</div>
       ${varianceHtml}
       <input type="text" data-idx="${i}" data-field="batch" value="${r.batch.replace(/"/g,'&quot;')}"/>
-      <input type="text" data-idx="${i}" data-field="source" value="${r.source.replace(/"/g,'&quot;')}" placeholder="e.g. Linear MFG-13"/>
+      <input type="text" data-idx="${i}" data-field="source" value="${r.source.replace(/"/g,'&quot;')}" placeholder="Optional remarks"/>
       <button class="btn-remove-sm" data-remove="${i}">&times;</button>
     </div>${reasonRow}`;
     }).join('');
@@ -1586,7 +1586,7 @@ function renderEmailPreview(){
     <div style="font-size:10px;color:#888780;margin:-2px 0 6px;">Based on the Direct Units projection.</div>
     <table class="ep-tbl2"><tr><th>Date</th><th>Flips to</th><th style="text-align:right;">~Balance</th></tr>${timelineRows||'<tr><td colspan=3>No upcoming flips in projection window</td></tr>'}</table>
     <div class="ep-section-title">📦 Inbound deliveries</div>
-    <table class="ep-tbl2"><tr><th>Product</th><th>Date</th><th>Status</th><th>Qty</th><th>Schedule Variance</th><th>Batch</th><th>Source</th></tr>${delivRowsHtml||'<tr><td colspan=7>No deliveries in window</td></tr>'}</table>
+    <table class="ep-tbl2"><tr><th>Product</th><th>Date</th><th>Status</th><th>Qty</th><th>Schedule Variance</th><th>Batch</th><th>Remarks</th></tr>${delivRowsHtml||'<tr><td colspan=7>No deliveries in window</td></tr>'}</table>
     ${delayNotes?`<div class="ep-section-title">📝 Schedule notes</div><div style="font-size:11px;color:#5F5E5A;">${delayNotes}</div>`:''}
   `;
 }
@@ -1614,7 +1614,7 @@ function buildEmailPlainText(){
   t+=`Date\tFlips to\t~Balance\n`;
   m.timeline.forEach(f=>{t+=`${f.date}\t${f.type==='OUT OF STOCK'?'BACKORDERED':'POSITIVE STOCK'}\t${f.balance.toLocaleString()}\n`;});
   t+=`\n📦 Inbound deliveries\n`;
-  t+=`Product\tDate\tStatus\tQty\tSchedule Variance\tBatch\tSource\n`;
+  t+=`Product\tDate\tStatus\tQty\tSchedule Variance\tBatch\tRemarks\n`;
   deliveryRows.forEach(r=>{
     const varDays=restockVarianceDays(r);
     const varText=varDays!==0?fmtVariance(varDays).text:'—';
