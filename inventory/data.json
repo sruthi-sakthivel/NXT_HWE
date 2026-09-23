@@ -8,7 +8,7 @@
         "sku": "NSSB0100-ZW",
         "available": 0,
         "committed": 0,
-        "backorder": 822
+        "backorder": 815
       },
       {
         "key": "tipsS",
@@ -30,8 +30,8 @@
         "key": "tipsL",
         "name": "Tips — Large",
         "sku": "NSEMTC0201C-W",
-        "available": 1344,
-        "committed": 49,
+        "available": 1332,
+        "committed": 61,
         "backorder": 0
       },
       {
@@ -40,7 +40,7 @@
         "sku": "NSEMWZ0103T-W",
         "available": 0,
         "committed": 0,
-        "backorder": 344
+        "backorder": 356
       },
       {
         "key": "wingsM",
@@ -429,7 +429,7 @@
     {
       "date": "2026-09-22",
       "day": 140,
-      "balance": -822
+      "balance": -815
     }
   ],
   "itemHistory": {
@@ -1381,7 +1381,7 @@
       {
         "date": "2026-09-22",
         "day": 140,
-        "balance": 1344
+        "balance": 1332
       }
     ],
     "wingsS": [
@@ -1698,7 +1698,7 @@
       {
         "date": "2026-09-22",
         "day": 140,
-        "balance": -344
+        "balance": -356
       }
     ],
     "wingsM": [
@@ -2336,5 +2336,5 @@
       }
     ]
   },
-  "lastRefreshed": "2026-09-22T19:43:16.648Z"
+  "lastRefreshed": "2026-09-23T00:31:50.538Z"
 }
