@@ -1557,7 +1557,7 @@ function renderEmailPreview(){
       return `<span style="display:inline-block;padding:2px 8px;border-radius:10px;font-weight:700;color:${v.color};background:${v.bg};">${v.text}</span>`;
     })():'';
     return `<tr>
-      <td style="color:${PRODUCT_COLOR[product]};font-weight:700;">${product}</td><td>${r.tbd?'TBD':r.date}</td><td style="color:${statusColor};font-weight:600;">${status}</td><td>${r.units.toLocaleString()}</td><td>${varianceHtml}</td><td>${r.batch||'—'}</td><td>${r.source||'—'}</td>
+      <td style="color:${PRODUCT_COLOR[product]};font-weight:700;">${product}</td><td>${r.tbd?'TBD':r.date}</td><td style="color:${statusColor};font-weight:600;">${status}</td><td>${r.units.toLocaleString()}</td><td>${varianceHtml}</td><td>${r.batch||''}</td><td>${r.source||''}</td>
     </tr>`;
   }).join('');
   const delayNotes=deliveryRows.filter(r=>r.delayReason&&r.delayReason.trim()).map(r=>
@@ -1617,8 +1617,8 @@ function buildEmailPlainText(){
   t+=`Product\tDate\tStatus\tQty\tVariance\tBatch\tRemarks\n`;
   deliveryRows.forEach(r=>{
     const varDays=restockVarianceDays(r);
-    const varText=varDays!==0?fmtVariance(varDays).text:'—';
-    t+=`${r.product||'MP3'}\t${r.tbd?'TBD':r.date}\t${r.status}\t${r.units.toLocaleString()}\t${varText}\t${r.batch||'—'}\t${r.source||'—'}\n`;
+    const varText=varDays!==0?fmtVariance(varDays).text:'';
+    t+=`${r.product||'MP3'}\t${r.tbd?'TBD':r.date}\t${r.status}\t${r.units.toLocaleString()}\t${varText}\t${r.batch||''}\t${r.source||''}\n`;
   });
   const delayNotesText=deliveryRows.filter(r=>r.delayReason&&r.delayReason.trim()).map(r=>`- ${r.product||'MP3'} ${r.date}: ${r.delayReason}`).join('\n');
   if(delayNotesText) t+=`\n📝 Schedule notes\n${delayNotesText}\n`;
