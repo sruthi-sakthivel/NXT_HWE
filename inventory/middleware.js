@@ -3,6 +3,7 @@ import { next } from '@vercel/functions';
 // Gate every request except the login page and the auth endpoint that
 // establishes the session cookie in the first place.
 export const config = {
+  runtime: 'nodejs',
   matcher: ['/((?!login.html|api/auth).*)'],
 };
 
