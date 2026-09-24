@@ -53,7 +53,7 @@ export default async function middleware(request) {
   const token = getCookie(request, COOKIE_NAME);
   const session = secret ? await verifySession(token, secret) : null;
 
-  if (session && session.email) {
+  if (session) {
     return next();
   }
 
